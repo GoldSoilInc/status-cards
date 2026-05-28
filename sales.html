@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // SALES TEAM CARD
+    // ============================================
+    const SHEET_URL = "PASTE_SALES_CSV_URL_HERE";
+
+    const TEAM_NAME = "Sales Team";
+    const TEAM_LEAD = "Jose / Gabriel";
+
+    function renderCard(data) {
+      const sources = parseSources(data, ['fb_mkt', 'realtor', 'mls', 'investor_base']);
+      const campaigns = parseCampaigns(data);
+      const people = parsePeople(data, ['jose', 'gabriel']);
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value" style="font-size: 28px;">${val(data, 'net_new', '0')}</div>
+            <div class="kpi-label">Net New</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value" style="font-size: 28px;">${val(data, 'sourced', '0')}</div>
+            <div class="kpi-label">Sourced</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value" style="font-size: 28px;">${val(data, 'appt_set', '0')}</div>
+            <div class="kpi-label">Appt Set</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value" style="font-size: 28px;">${val(data, 'qualified', '0')}</div>
+            <div class="kpi-label">Qualified</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value" style="font-size: 28px;">${val(data, 'hot_leads', '0')}</div>
+            <div class="kpi-label">Hot Leads</div>
+          </div>
+        </div>
+
+        <div style="padding: 12px 24px 0;">
+          <div class="inline-stat" style="display: flex; gap: 14px; align-items: center;">
+            <span style="color: var(--gs-faint);">Mid-funnel:</span>
+            <span><span class="label-bold">${val(data, 'hot_with_phone', '0')}</span> Hot w/ Phone</span>
+            <span style="color: var(--gs-border-soft);">·</span>
+            <span><span class="label-bold">${val(data, 'obj_handling', '0')}</span> Obj Handling</span>
+            <span style="color: var(--gs-border-soft);">·</span>
+            <span><span class="label-bold">${val(data, 'price_neg', '0')}</span> Price Neg</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>LEADS BY SOURCE</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>SOURCE</th>
+                <th class="num">NET NEW</th>
+                <th class="num">SOURCED</th>
+                <th class="num">APPT SET</th>
+                <th class="num">QUAL</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sources.map(s => `
+                <tr>
+                  <td class="label">${s.name}</td>
+                  <td class="num">${s.net_new}</td>
+                  <td class="num">${s.sourced}</td>
+                  <td class="num">${s.appt_set}</td>
+                  <td class="num highlight">${s.qualified}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${campaigns.length > 0 ? `
+          <div class="section">
+            <h2>CAMPAIGNS & COUNTIES WORKED TODAY</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>CAMPAIGN</th>
+                  <th>COUNTY · STATE</th>
+                  <th class="num">LEADS</th>
+                  <th class="num">STAGE</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${campaigns.map(c => `
+                  <tr>
+                    <td class="label">${c.name}</td>
+                    <td>${c.county}</td>
+                    <td class="num">${c.leads}</td>
+                    <td class="num">${c.stage}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : ''}
+
+        <div class="section">
+          <h2>BY PERSON</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>PERSON</th>
+                <th class="num">DIALS</th>
+                <th class="num">CONVOS</th>
+                <th class="num">APPTS</th>
+                <th class="num">QUAL</th>
+                <th class="num">CONTRACTS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${people.map(p => `
+                <tr>
+                  <td class="label">${p.name}</td>
+                  <td class="num">${p.dials}</td>
+                  <td class="num">${p.convos}</td>
+                  <td class="num">${p.appts}</td>
+                  <td class="num highlight">${p.qual}</td>
+                  <td class="num">${p.contracts}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${renderFlags(val(data, 'flags', ''))}
+        ${renderFooter()}
+      `);
+    }
+
+    function parseSources(data, sources) {
+      const labels = {
+        fb_mkt: 'FB Mkt (in-house)',
+        realtor: 'Realtor',
+        mls: 'MLS',
+        investor_base: 'Investor Base'
+      };
+      return sources.map(s => ({
+        name: labels[s] || s,
+        net_new: val(data, `${s}_net_new`, '—'),
+        sourced: val(data, `${s}_sourced`, '—'),
+        appt_set: val(data, `${s}_appt_set`, '—'),
+        qualified: val(data, `${s}_qualified`, '—')
+      }));
+    }
+
+    function parseCampaigns(data) {
+      const cards = [];
+      for (let i = 1; i <= 10; i++) {
+        const name = data[`campaign_${i}_name`];
+        if (!name) continue;
+        cards.push({
+          name,
+          county: val(data, `campaign_${i}_county`, '—'),
+          leads: val(data, `campaign_${i}_leads`, '0'),
+          stage: val(data, `campaign_${i}_stage`, '—')
+        });
+      }
+      return cards;
+    }
+
+    function parsePeople(data, names) {
+      return names.map(n => ({
+        name: n.charAt(0).toUpperCase() + n.slice(1),
+        dials: val(data, `${n}_dials`, '—'),
+        convos: val(data, `${n}_convos`, '—'),
+        appts: val(data, `${n}_appts`, '0'),
+        qual: val(data, `${n}_qual`, '0'),
+        contracts: val(data, `${n}_contracts`, '0')
+      }));
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      if (SHEET_URL === "PASTE_SALES_CSV_URL_HERE") {
+        root.innerHTML = renderError(
+          "Sheet URL not yet configured. Open sales.html and paste your published CSV URL into SHEET_URL."
+        );
+        return;
+      }
+
+      try {
+        const data = await loadSheetData(SHEET_URL);
+        root.innerHTML = renderCard(data);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

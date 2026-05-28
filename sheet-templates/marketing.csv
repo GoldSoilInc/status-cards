@@ -1,0 +1,29 @@
+metric,value
+campaigns_launched,9
+listings_touched,7
+price_drops,3
+in_progress,1
+campaign_1_listing,L-1430
+campaign_1_location,"Martins Ferry, OH"
+campaign_1_channels,Buyer · Realtor
+campaign_2_listing,L-1454
+campaign_2_location,"Wagener, SC"
+campaign_2_channels,Buyer
+campaign_3_listing,L-1435
+campaign_3_location,"Acton, ME"
+campaign_3_channels,Realtor
+campaign_4_listing,L-1447
+campaign_4_location,"North Augusta, SC"
+campaign_4_channels,Buyer
+campaign_5_listing,L-1451
+campaign_5_location,"La Plata, MD"
+campaign_5_channels,Investor · Buyer · Realtor
+ellyse_campaigns,5
+ellyse_listings,5
+ellyse_price_drops,3
+ellyse_wip,0
+shiela_campaigns,4
+shiela_listings,2
+shiela_price_drops,0
+shiela_wip,1
+flags,None right now.

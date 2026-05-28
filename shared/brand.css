@@ -1,0 +1,508 @@
+/* ============================================
+   GoldSoil Status Cards — Brand Stylesheet
+   One source of truth for all team cards
+   ============================================ */
+
+:root {
+  --gs-dark-green: #1A472A;
+  --gs-dark-green-light: #2A6B40;
+  --gs-gold: #C4A22F;
+  --gs-cream: #F5F0E1;
+  --gs-cream-light: #FFF8E1;
+  --gs-text: #333333;
+  --gs-muted: #666666;
+  --gs-faint: #888888;
+  --gs-border: #E5E5E5;
+  --gs-border-soft: #CCCCCC;
+
+  --font-display: Georgia, 'Times New Roman', serif;
+  --font-body: Arial, Helvetica, sans-serif;
+
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: #F8F8F8;
+  margin: 0;
+  padding: 24px;
+  color: var(--gs-text);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Refresh bar above card */
+.refresh-bar {
+  width: 100%;
+  max-width: 720px;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-muted);
+}
+
+.refresh-bar button {
+  background: var(--gs-dark-green);
+  color: var(--gs-gold);
+  border: none;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+}
+
+.refresh-bar button:hover {
+  background: var(--gs-dark-green-light);
+}
+
+.refresh-bar .last-updated {
+  font-style: italic;
+}
+
+/* The card */
+.card {
+  background: #FFFFFF;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  max-width: 720px;
+  width: 100%;
+}
+
+/* Header */
+.card-header {
+  background: var(--gs-dark-green);
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 4px solid var(--gs-gold);
+}
+
+.card-header .brand {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 11px;
+  color: var(--gs-gold);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+}
+
+.card-header h1 {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 22px;
+  color: #FFFFFF;
+  line-height: 1;
+  margin: 0;
+}
+
+.card-header .lead-block {
+  text-align: right;
+}
+
+.card-header .lead-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--gs-gold);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card-header .lead-name {
+  font-family: var(--font-body);
+  font-weight: bold;
+  font-size: 14px;
+  color: #FFFFFF;
+}
+
+/* Time-slot strip */
+.time-strip {
+  background: var(--gs-cream);
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 0.5px solid var(--gs-border);
+}
+
+.time-strip .label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--gs-faint);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-right: 8px;
+}
+
+.time-strip .pills {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.time-strip .pill {
+  background: #FFFFFF;
+  color: var(--gs-faint);
+  border: 1px solid var(--gs-border-soft);
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-family: var(--font-body);
+  font-size: 11px;
+}
+
+.time-strip .pill.active {
+  background: var(--gs-dark-green);
+  color: var(--gs-gold);
+  border-color: var(--gs-dark-green);
+  font-weight: bold;
+}
+
+.time-strip .date {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--gs-dark-green);
+  font-weight: bold;
+}
+
+/* Hero KPI strip */
+.kpi-strip {
+  display: grid;
+  border-bottom: 0.5px solid var(--gs-border);
+}
+
+.kpi-cell {
+  padding: 18px 16px;
+  text-align: center;
+  border-right: 0.5px solid var(--gs-border);
+}
+
+.kpi-cell:last-child { border-right: none; }
+
+.kpi-cell.accent { background: var(--gs-cream); }
+.kpi-cell.accent .kpi-label { color: var(--gs-dark-green); font-weight: bold; }
+
+.kpi-cell.hero { background: var(--gs-dark-green); }
+.kpi-cell.hero .kpi-value { color: var(--gs-gold); }
+.kpi-cell.hero .kpi-label { color: var(--gs-gold); font-weight: bold; }
+
+.kpi-value {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 32px;
+  color: var(--gs-dark-green);
+  line-height: 1;
+}
+
+.kpi-label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--gs-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 6px;
+}
+
+/* Hero block (used for LIM target vs actual) */
+.hero-block {
+  padding: 18px 20px;
+  background: linear-gradient(135deg, var(--gs-dark-green) 0%, var(--gs-dark-green-light) 100%);
+  border-right: 0.5px solid var(--gs-border);
+}
+
+.hero-block .label {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--gs-gold);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+
+.hero-block .value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.hero-block .value-big {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 40px;
+  color: var(--gs-gold);
+  line-height: 1;
+}
+
+.hero-block .value-target {
+  font-family: var(--font-display);
+  font-size: 22px;
+  color: var(--gs-cream);
+  line-height: 1;
+}
+
+.hero-block .badge {
+  display: inline-block;
+  background: var(--gs-gold);
+  color: var(--gs-dark-green);
+  padding: 3px 10px;
+  border-radius: 10px;
+  font-family: var(--font-body);
+  font-size: 10px;
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  margin-top: 8px;
+}
+
+/* Section headers */
+.section {
+  padding: 18px 24px 4px;
+}
+
+.section h2 {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 12px;
+  color: var(--gs-gold);
+  letter-spacing: 1.5px;
+  margin: 0 0 8px 0;
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 12px;
+}
+
+table thead tr {
+  background: var(--gs-dark-green);
+}
+
+table th {
+  text-align: left;
+  padding: 8px 10px;
+  color: var(--gs-gold);
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+table th.num { text-align: right; }
+
+table td {
+  padding: 8px 10px;
+  color: var(--gs-text);
+  border-bottom: 0.5px solid var(--gs-border);
+}
+
+table td.num { text-align: right; }
+table td.label { font-weight: bold; color: var(--gs-dark-green); }
+table td.highlight { color: var(--gs-dark-green); font-weight: bold; }
+table td.gold { color: var(--gs-gold); font-weight: bold; }
+
+table tbody tr:nth-child(even) { background: var(--gs-cream); }
+
+table tbody tr.total {
+  background: var(--gs-dark-green);
+}
+
+table tbody tr.total td {
+  color: var(--gs-gold);
+  font-weight: bold;
+  border-bottom: none;
+}
+
+/* Inline text section (counties top list, channel split, etc) */
+.inline-stat {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-text);
+  line-height: 1.7;
+}
+
+.inline-stat .label-bold {
+  color: var(--gs-dark-green);
+  font-weight: bold;
+}
+
+/* Flags / Needs Anshul */
+.flags {
+  margin: 16px 24px;
+  background: var(--gs-cream-light);
+  border-left: 5px solid var(--gs-gold);
+  padding: 12px 16px;
+}
+
+.flags .flag-label {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 11px;
+  color: var(--gs-gold);
+  letter-spacing: 1.5px;
+  margin-bottom: 4px;
+}
+
+.flags .flag-body {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-text);
+  line-height: 1.5;
+}
+
+/* Footer */
+.card-footer {
+  background: var(--gs-cream);
+  padding: 10px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 0.5px solid var(--gs-border);
+}
+
+.card-footer .org {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 11px;
+  color: var(--gs-dark-green);
+}
+
+.card-footer .posted {
+  font-family: var(--font-body);
+  font-size: 10px;
+  color: var(--gs-faint);
+  letter-spacing: 0.5px;
+}
+
+/* Loading & error states */
+.loading-state, .error-state {
+  padding: 60px 24px;
+  text-align: center;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--gs-muted);
+}
+
+.error-state {
+  color: #B00020;
+  background: #FFF0F0;
+  border-radius: var(--radius-md);
+  margin: 20px;
+}
+
+/* Landing page */
+.landing {
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.landing-header {
+  background: var(--gs-dark-green);
+  padding: 28px 28px 24px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-bottom: 4px solid var(--gs-gold);
+  text-align: center;
+}
+
+.landing-header .brand {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 12px;
+  color: var(--gs-gold);
+  letter-spacing: 3px;
+  margin-bottom: 8px;
+}
+
+.landing-header h1 {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 28px;
+  color: #FFFFFF;
+  margin: 0 0 6px 0;
+}
+
+.landing-header .tagline {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 14px;
+  color: var(--gs-cream);
+}
+
+.landing-body {
+  background: #FFFFFF;
+  padding: 24px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.team-card-link {
+  display: block;
+  background: #FFFFFF;
+  border: 1px solid var(--gs-border);
+  border-radius: var(--radius-md);
+  padding: 18px 20px;
+  text-decoration: none;
+  color: var(--gs-text);
+  transition: all 0.15s;
+}
+
+.team-card-link:hover {
+  border-color: var(--gs-gold);
+  background: var(--gs-cream);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.06);
+}
+
+.team-card-link .team-name {
+  font-family: var(--font-display);
+  font-weight: bold;
+  font-size: 16px;
+  color: var(--gs-dark-green);
+  margin-bottom: 4px;
+}
+
+.team-card-link .team-lead {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-muted);
+}
+
+.landing-instructions {
+  margin-top: 20px;
+  background: var(--gs-cream);
+  border-left: 4px solid var(--gs-gold);
+  padding: 14px 18px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-text);
+  line-height: 1.6;
+}
+
+.landing-instructions strong {
+  color: var(--gs-dark-green);
+}
+
+@media (max-width: 600px) {
+  body { padding: 12px; }
+  .team-grid { grid-template-columns: 1fr; }
+  .kpi-strip { grid-template-columns: repeat(2, 1fr) !important; }
+}

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LIM Outreach — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // LIM OUTREACH TEAM CARD
+    // ============================================
+    const SHEET_URL = "PASTE_LIM_CSV_URL_HERE";
+
+    const TEAM_NAME = "Land Intake Team";
+    const TEAM_LEAD = "Juan";
+
+    function renderCard(data) {
+      const agents = parseAgents(data, ['aladdin', 'juan', 'maryam', 'tina']);
+
+      const qualified = num(data, 'qualified_total');
+      const target = num(data, 'qualified_target', 30);
+      const sourced = num(data, 'sourced_total');
+      const phoneQ = num(data, 'phone_q');
+      const textQ = num(data, 'text_q');
+      const qualifyRate = sourced > 0 ? ((qualified / sourced) * 100).toFixed(1) : '0.0';
+      const phonePct = qualified > 0 ? Math.round((phoneQ / qualified) * 100) : 0;
+      const textPct = qualified > 0 ? Math.round((textQ / qualified) * 100) : 0;
+
+      // Hero block: progress vs target
+      const isEOD = getCurrentTimeSlot() === '5pm';
+      const overUnder = qualified - target;
+      const pctToTarget = target > 0 ? Math.round((qualified / target) * 100) : 0;
+      let badgeText;
+      if (isEOD) {
+        badgeText = overUnder >= 0 ? `✓ TARGET +${overUnder}` : `${overUnder} SHORT`;
+      } else {
+        badgeText = `${pctToTarget}% TO TARGET`;
+      }
+
+      const topCounties = parseTopCounties(data);
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div class="kpi-strip" style="grid-template-columns: 1.4fr 1fr 1fr;">
+          <div class="hero-block">
+            <div class="label">Qualified vs Target</div>
+            <div class="value-row">
+              <div class="value-big">${qualified}</div>
+              <div class="value-target">/ ${target}</div>
+            </div>
+            <div class="badge">${badgeText}</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value">${sourced}</div>
+            <div class="kpi-label">Sourced</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${qualifyRate}%</div>
+            <div class="kpi-label">Qualify Rate</div>
+          </div>
+        </div>
+
+        <div style="padding: 14px 24px 0; display: flex; gap: 16px; align-items: center;">
+          <div style="font-family: var(--font-display); font-weight: bold; font-size: 12px; color: var(--gs-gold); letter-spacing: 1.5px;">CHANNEL</div>
+          <div class="inline-stat">
+            📞 Phone Q: <span class="label-bold">${phoneQ}</span> <span style="color: var(--gs-faint);">(${phonePct}%)</span>
+            &nbsp;·&nbsp;
+            💬 Text Q: <span class="label-bold">${textQ}</span> <span style="color: var(--gs-faint);">(${textPct}%)</span>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>BY AGENT</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>AGENT</th>
+                <th class="num">SOURCED</th>
+                <th class="num">PHONE Q</th>
+                <th class="num">TEXT Q</th>
+                <th class="num">TOTAL Q</th>
+                <th class="num">RATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${agents.map(a => `
+                <tr>
+                  <td class="label">${a.name}</td>
+                  <td class="num">${a.sourced}</td>
+                  <td class="num">${a.phone_q}</td>
+                  <td class="num">${a.text_q}</td>
+                  <td class="num highlight">${a.total_q}</td>
+                  <td class="num gold">${a.rate}</td>
+                </tr>
+              `).join('')}
+              <tr class="total">
+                <td>TOTAL</td>
+                <td class="num">${sourced}</td>
+                <td class="num">${phoneQ}</td>
+                <td class="num">${textQ}</td>
+                <td class="num">${qualified}</td>
+                <td class="num">${qualifyRate}%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        ${topCounties.length > 0 ? `
+          <div class="section">
+            <h2>TOP COUNTIES</h2>
+            <div class="inline-stat">
+              ${topCounties.map(c => `<span class="label-bold">${c.name}</span> ${c.count}`).join(' &nbsp;·&nbsp; ')}
+              ${data.counties_other_count ? `<span style="color: var(--gs-faint);"> &nbsp;+ ${data.counties_other_count} counties producing 1-2 each</span>` : ''}
+            </div>
+          </div>
+        ` : ''}
+
+        ${renderFlags(val(data, 'flags', ''))}
+        ${renderFooter()}
+      `);
+    }
+
+    function parseAgents(data, names) {
+      return names.map(n => {
+        const sourced = num(data, `${n}_sourced`);
+        const phone = num(data, `${n}_phone_q`);
+        const text = num(data, `${n}_text_q`);
+        const total = phone + text;
+        const rate = sourced > 0 ? ((total / sourced) * 100).toFixed(1) + '%' : '—';
+        return {
+          name: n.charAt(0).toUpperCase() + n.slice(1),
+          sourced,
+          phone_q: phone,
+          text_q: text,
+          total_q: total,
+          rate
+        };
+      });
+    }
+
+    function parseTopCounties(data) {
+      const counties = [];
+      for (let i = 1; i <= 5; i++) {
+        const name = data[`county_${i}_name`];
+        if (!name) continue;
+        counties.push({
+          name,
+          count: val(data, `county_${i}_count`, '0')
+        });
+      }
+      return counties;
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      if (SHEET_URL === "PASTE_LIM_CSV_URL_HERE") {
+        root.innerHTML = renderError(
+          "Sheet URL not yet configured. Open lim.html and paste your published CSV URL into SHEET_URL."
+        );
+        return;
+      }
+
+      try {
+        const data = await loadSheetData(SHEET_URL);
+        root.innerHTML = renderCard(data);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

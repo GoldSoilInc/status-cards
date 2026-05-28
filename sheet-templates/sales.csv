@@ -1,0 +1,52 @@
+metric,value
+net_new,5
+sourced,5
+appt_set,3
+qualified,1
+hot_leads,0
+hot_with_phone,0
+obj_handling,0
+price_neg,0
+fb_mkt_net_new,3
+fb_mkt_sourced,
+fb_mkt_appt_set,2
+fb_mkt_qualified,1
+realtor_net_new,1
+realtor_sourced,1
+realtor_appt_set,
+realtor_qualified,
+mls_net_new,1
+mls_sourced,
+mls_appt_set,1
+mls_qualified,
+investor_base_net_new,
+investor_base_sourced,2
+investor_base_appt_set,
+investor_base_qualified,
+campaign_1_name,FB Mkt — Spring Push
+campaign_1_county,"Belmont, OH"
+campaign_1_leads,2
+campaign_1_stage,Appt Set
+campaign_2_name,FB Mkt — Spring Push
+campaign_2_county,"Charles, MD"
+campaign_2_leads,1
+campaign_2_stage,Qualified
+campaign_3_name,Realtor Outreach
+campaign_3_county,"Haywood, NC"
+campaign_3_leads,1
+campaign_3_stage,Sourced
+campaign_4_name,MLS Pull
+campaign_4_county,"Aiken, SC"
+campaign_4_leads,1
+campaign_4_stage,Appt Set
+jose_dials,
+jose_convos,
+jose_appts,2
+jose_qual,1
+jose_contracts,0
+gabriel_dials,
+gabriel_convos,
+gabriel_appts,1
+gabriel_qual,0
+gabriel_contracts,0
+flags,"Zero Hot Leads in funnel today — pipeline thinning at top of mid-funnel. Watch tomorrow."

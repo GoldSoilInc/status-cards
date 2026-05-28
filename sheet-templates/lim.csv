@@ -1,0 +1,30 @@
+metric,value
+qualified_total,32
+qualified_target,30
+sourced_total,826
+phone_q,10
+text_q,22
+aladdin_sourced,210
+aladdin_phone_q,1
+aladdin_text_q,11
+juan_sourced,184
+juan_phone_q,5
+juan_text_q,4
+maryam_sourced,144
+maryam_phone_q,1
+maryam_text_q,5
+tina_sourced,288
+tina_phone_q,2
+tina_text_q,2
+county_1_name,"Tuscaloosa AL"
+county_1_count,5
+county_2_name,"Washington VA"
+county_2_count,5
+county_3_name,"Sauk WI"
+county_3_count,4
+county_4_name,"Union OH"
+county_4_count,4
+county_5_name,"Eastland TX"
+county_5_count,3
+counties_other_count,9
+flags,None right now.

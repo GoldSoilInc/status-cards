@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comps — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // COMPS TEAM CARD
+    // ============================================
+    const SHEET_URL = "PASTE_COMPS_CSV_URL_HERE";
+
+    const TEAM_NAME = "Comps Team";
+    const TEAM_LEAD = "Edcel";
+
+    function renderCard(data) {
+      const people = parsePeople(data, ['nathan', 'erl', 'edcel', 'rezello']);
+
+      const processed = num(data, 'processed');
+      const analyzed = num(data, 'analyzed');
+      const offers = num(data, 'offers_prepared');
+      const fantasy = num(data, 'fantasyland');
+      const rejected = num(data, 'rejected');
+      const pending = num(data, 'pending');
+      const offerRate = analyzed > 0 ? Math.round((offers / analyzed) * 100) : 0;
+      const unaccounted = Math.max(0, analyzed - offers - fantasy - rejected - pending);
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${processed}</div>
+            <div class="kpi-label">Processed</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value">${analyzed}</div>
+            <div class="kpi-label">Analyzed</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${offers}</div>
+            <div class="kpi-label">Offers</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${offerRate}%</div>
+            <div class="kpi-label">Offer Rate</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>DISPOSITION — ${analyzed} ANALYZED</h2>
+          <div class="inline-stat">
+            <span class="label-bold">Offers:</span> ${offers} &nbsp;·&nbsp;
+            <span class="label-bold">Fantasy:</span> ${fantasy} &nbsp;·&nbsp;
+            <span class="label-bold">Rejected:</span> ${rejected} &nbsp;·&nbsp;
+            <span class="label-bold">Pending:</span> ${pending}
+            ${unaccounted > 0 ? `&nbsp;·&nbsp; <span style="color: var(--gs-gold); font-weight: bold;">Unaccounted: ${unaccounted}</span>` : ''}
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>SUBDIVIDES</h2>
+          <div class="inline-stat">
+            <span class="label-bold">${val(data, 'subdivides_counties_scraped', '0')}</span> county scraped &nbsp;·&nbsp;
+            <span class="label-bold">${val(data, 'subdivides_fresh_leads', '0')}</span> fresh leads &nbsp;·&nbsp;
+            <span class="label-bold">${val(data, 'subdivides_listed_mls', '0')}</span> listed on MLS
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>BY PERSON</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>PERSON</th>
+                <th class="num">PROC</th>
+                <th class="num">ANLZ</th>
+                <th class="num">OFFER</th>
+                <th class="num">FANTASY</th>
+                <th class="num">REJ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${people.map(p => `
+                <tr>
+                  <td class="label">${p.name}</td>
+                  <td class="num">${p.processed}</td>
+                  <td class="num">${p.analyzed}</td>
+                  <td class="num highlight">${p.offers}</td>
+                  <td class="num">${p.fantasy}</td>
+                  <td class="num">${p.rejected}</td>
+                </tr>
+              `).join('')}
+              <tr class="total">
+                <td>TOTAL</td>
+                <td class="num">${processed}</td>
+                <td class="num">${analyzed}</td>
+                <td class="num">${offers}</td>
+                <td class="num">${fantasy}</td>
+                <td class="num">${rejected}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        ${renderFlags(val(data, 'flags', ''))}
+        ${renderFooter()}
+      `);
+    }
+
+    function parsePeople(data, names) {
+      return names.map(n => ({
+        name: n.charAt(0).toUpperCase() + n.slice(1),
+        processed: val(data, `${n}_processed`, '—'),
+        analyzed: val(data, `${n}_analyzed`, '0'),
+        offers: val(data, `${n}_offers`, '0'),
+        fantasy: val(data, `${n}_fantasy`, '0'),
+        rejected: val(data, `${n}_rejected`, '0')
+      }));
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      if (SHEET_URL === "PASTE_COMPS_CSV_URL_HERE") {
+        root.innerHTML = renderError(
+          "Sheet URL not yet configured. Open comps.html and paste your published CSV URL into SHEET_URL."
+        );
+        return;
+      }
+
+      try {
+        const data = await loadSheetData(SHEET_URL);
+        root.innerHTML = renderCard(data);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

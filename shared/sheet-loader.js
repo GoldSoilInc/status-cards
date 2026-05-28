@@ -191,15 +191,59 @@ function renderFooter() {
   `;
 }
 
-/** Render Flags section */
+/** Render Flags section with inline edit toggle (local to screenshot, not persisted) */
 function renderFlags(flagsText) {
   const text = flagsText && flagsText.trim() ? flagsText : 'None right now.';
+  // Escape for safe HTML insertion + textarea
+  const escaped = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
   return `
-    <div class="flags">
-      <div class="flag-label">⚑ FLAGS / NEEDS ANSHUL</div>
-      <div class="flag-body">${text}</div>
+    <div class="flags" id="flags-block">
+      <div class="flag-header">
+        <div class="flag-label">⚑ FLAGS / NEEDS ANSHUL</div>
+        <button type="button" class="flag-edit-btn" onclick="toggleFlagEdit()">EDIT</button>
+      </div>
+      <div class="flag-body" id="flag-display">${escaped}</div>
+      <div class="flag-edit" id="flag-edit" style="display:none;">
+        <textarea id="flag-textarea" rows="4">${escaped}</textarea>
+        <div class="flag-edit-actions">
+          <button type="button" class="flag-save-btn" onclick="saveFlagEdit()">SAVE</button>
+          <button type="button" class="flag-cancel-btn" onclick="cancelFlagEdit()">CANCEL</button>
+        </div>
+      </div>
     </div>
   `;
+}
+
+/** Toggle from display mode to edit mode */
+function toggleFlagEdit() {
+  document.getElementById('flag-display').style.display = 'none';
+  document.querySelector('#flags-block .flag-edit-btn').style.display = 'none';
+  document.getElementById('flag-edit').style.display = 'block';
+  document.getElementById('flag-textarea').focus();
+}
+
+/** Save the edited flag text back into the display (local only — for screenshot) */
+function saveFlagEdit() {
+  const newText = document.getElementById('flag-textarea').value.trim() || 'None right now.';
+  const escaped = newText
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br>');
+  document.getElementById('flag-display').innerHTML = escaped;
+  document.getElementById('flag-display').style.display = 'block';
+  document.getElementById('flag-edit').style.display = 'none';
+  document.querySelector('#flags-block .flag-edit-btn').style.display = 'inline-block';
+}
+
+/** Cancel without saving */
+function cancelFlagEdit() {
+  document.getElementById('flag-edit').style.display = 'none';
+  document.getElementById('flag-display').style.display = 'block';
+  document.querySelector('#flags-block .flag-edit-btn').style.display = 'inline-block';
 }
 
 /** Render last-updated text in the refresh bar */

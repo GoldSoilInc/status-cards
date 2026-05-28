@@ -23,16 +23,18 @@ async function loadSheetData(csvUrl) {
 
 /**
  * Parses a 2-column CSV (metric, value) into a key-value object.
- * Handles quoted fields, commas inside quotes, and escaped quotes.
+ * Handles quoted fields, commas inside quotes, escaped quotes, AND
+ * newlines embedded inside quoted cells (which Google Sheets emits
+ * when a cell contains line breaks).
  */
 function parseCSV(csv) {
-  const rows = csv.trim().split(/\r?\n/);
+  const rows = parseAllRows(csv);
   if (rows.length < 2) return {};
 
   const data = {};
   // Skip the header row (index 0)
   for (let i = 1; i < rows.length; i++) {
-    const cells = parseRow(rows[i]);
+    const cells = rows[i];
     if (cells.length >= 2) {
       const key = cells[0].trim();
       const value = cells[1].trim();
@@ -42,27 +44,45 @@ function parseCSV(csv) {
   return data;
 }
 
-/** Parse a single CSV row handling quoted fields. */
-function parseRow(row) {
-  const cells = [];
+/**
+ * Parse a full CSV string into rows, character-by-character, respecting
+ * quoted cells that span multiple lines. Returns an array of arrays.
+ */
+function parseAllRows(csv) {
+  const rows = [];
   let current = '';
+  let row = [];
   let inQuotes = false;
-  for (let i = 0; i < row.length; i++) {
-    const c = row[i];
-    if (c === '"' && row[i + 1] === '"') {
+
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i];
+    if (c === '"' && csv[i + 1] === '"') {
+      // Escaped quote inside a quoted cell
       current += '"';
       i++;
     } else if (c === '"') {
       inQuotes = !inQuotes;
     } else if (c === ',' && !inQuotes) {
-      cells.push(current);
+      row.push(current);
+      current = '';
+    } else if ((c === '\n' || c === '\r') && !inQuotes) {
+      // End of row (only outside quotes)
+      // Handle \r\n: skip the \n that follows \r
+      if (c === '\r' && csv[i + 1] === '\n') i++;
+      row.push(current);
+      rows.push(row);
+      row = [];
       current = '';
     } else {
       current += c;
     }
   }
-  cells.push(current);
-  return cells;
+  // Push the last row if there's leftover content
+  if (current.length > 0 || row.length > 0) {
+    row.push(current);
+    rows.push(row);
+  }
+  return rows;
 }
 
 /**

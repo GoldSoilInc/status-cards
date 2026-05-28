@@ -14,132 +14,111 @@
     // ============================================
     // SALES TEAM CARD
     // ============================================
-    const SHEET_URL = "PASTE_SALES_CSV_URL_HERE";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=332866919&single=true&output=csv";
 
     const TEAM_NAME = "Sales Team";
     const TEAM_LEAD = "Jose / Gabriel";
 
     function renderCard(data) {
-      const sources = parseSources(data, ['fb_mkt', 'realtor', 'mls', 'investor_base']);
-      const campaigns = parseCampaigns(data);
       const people = parsePeople(data, ['jose', 'gabriel']);
+      const sources = parseList(data['top_sources']);
+      const locations = parseList(data['top_locations']);
 
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(5, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
           <div class="kpi-cell">
-            <div class="kpi-value" style="font-size: 28px;">${val(data, 'net_new', '0')}</div>
-            <div class="kpi-label">Net New</div>
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-value" style="font-size: 28px;">${val(data, 'sourced', '0')}</div>
+            <div class="kpi-value">${val(data, 'sourced', '0')}</div>
             <div class="kpi-label">Sourced</div>
           </div>
-          <div class="kpi-cell">
-            <div class="kpi-value" style="font-size: 28px;">${val(data, 'appt_set', '0')}</div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${val(data, 'appt_set', '0')}</div>
             <div class="kpi-label">Appt Set</div>
           </div>
-          <div class="kpi-cell accent">
-            <div class="kpi-value" style="font-size: 28px;">${val(data, 'qualified', '0')}</div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${val(data, 'qualified', '0')}</div>
             <div class="kpi-label">Qualified</div>
           </div>
-          <div class="kpi-cell hero">
-            <div class="kpi-value" style="font-size: 28px;">${val(data, 'hot_leads', '0')}</div>
-            <div class="kpi-label">Hot Leads</div>
-          </div>
         </div>
 
-        <div style="padding: 12px 24px 0;">
-          <div class="inline-stat" style="display: flex; gap: 14px; align-items: center;">
-            <span style="color: var(--gs-faint);">Mid-funnel:</span>
-            <span><span class="label-bold">${val(data, 'hot_with_phone', '0')}</span> Hot w/ Phone</span>
+        <div style="padding: 14px 24px 0;">
+          <div style="display: flex; gap: 14px; align-items: center; font-family: var(--font-body); font-size: 12px;">
+            <span style="color: var(--gs-faint); font-family: var(--font-display); font-size: 10px; letter-spacing: 1.5px;">PIPELINE</span>
+            <span><span class="label-bold">${val(data, 'negotiation', '0')}</span> Negotiation</span>
             <span style="color: var(--gs-border-soft);">·</span>
-            <span><span class="label-bold">${val(data, 'obj_handling', '0')}</span> Obj Handling</span>
+            <span><span class="label-bold">${val(data, 'contract_sent', '0')}</span> Contract Sent</span>
             <span style="color: var(--gs-border-soft);">·</span>
-            <span><span class="label-bold">${val(data, 'price_neg', '0')}</span> Price Neg</span>
+            <span><span class="label-bold">${val(data, 'uc_wo_emd', '0')}</span> UC w/o EMD</span>
+            <span style="color: var(--gs-border-soft);">·</span>
+            <span><span class="label-bold">${val(data, 'uc_w_emd', '0')}</span> UC w/ EMD</span>
           </div>
         </div>
 
         <div class="section">
-          <h2>LEADS BY SOURCE</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>SOURCE</th>
-                <th class="num">NET NEW</th>
-                <th class="num">SOURCED</th>
-                <th class="num">APPT SET</th>
-                <th class="num">QUAL</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${sources.map(s => `
-                <tr>
-                  <td class="label">${s.name}</td>
-                  <td class="num">${s.net_new}</td>
-                  <td class="num">${s.sourced}</td>
-                  <td class="num">${s.appt_set}</td>
-                  <td class="num highlight">${s.qualified}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-
-        ${campaigns.length > 0 ? `
-          <div class="section">
-            <h2>CAMPAIGNS & COUNTIES WORKED TODAY</h2>
-            <table>
-              <thead>
-                <tr>
-                  <th>CAMPAIGN</th>
-                  <th>COUNTY · STATE</th>
-                  <th class="num">LEADS</th>
-                  <th class="num">STAGE</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${campaigns.map(c => `
-                  <tr>
-                    <td class="label">${c.name}</td>
-                    <td>${c.county}</td>
-                    <td class="num">${c.leads}</td>
-                    <td class="num">${c.stage}</td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        ` : ''}
-
-        <div class="section">
-          <h2>BY PERSON</h2>
+          <h2>BY PERSON · TODAY</h2>
           <table>
             <thead>
               <tr>
                 <th>PERSON</th>
-                <th class="num">DIALS</th>
-                <th class="num">CONVOS</th>
-                <th class="num">APPTS</th>
-                <th class="num">QUAL</th>
-                <th class="num">CONTRACTS</th>
+                <th class="num">SOURCED</th>
+                <th class="num">APPT SET</th>
+                <th class="num">QUALIFIED</th>
+                <th class="num">UC W/ EMD</th>
               </tr>
             </thead>
             <tbody>
               ${people.map(p => `
                 <tr>
                   <td class="label">${p.name}</td>
-                  <td class="num">${p.dials}</td>
-                  <td class="num">${p.convos}</td>
-                  <td class="num">${p.appts}</td>
-                  <td class="num highlight">${p.qual}</td>
-                  <td class="num">${p.contracts}</td>
+                  <td class="num">${p.sourced}</td>
+                  <td class="num">${p.appt_set}</td>
+                  <td class="num highlight">${p.qualified}</td>
+                  <td class="num">${p.uc_w_emd}</td>
                 </tr>
               `).join('')}
             </tbody>
           </table>
+        </div>
+
+        <div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div>
+            <h2>TODAY'S SOURCES</h2>
+            ${sources.length > 0 ? `
+              <table>
+                <thead>
+                  <tr><th>SOURCE</th><th class="num">LEADS</th></tr>
+                </thead>
+                <tbody>
+                  ${sources.map(s => `
+                    <tr>
+                      <td class="label">${s.label}</td>
+                      <td class="num highlight">${s.count}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `<div class="empty-state">No leads sourced yet today.</div>`}
+          </div>
+          <div>
+            <h2>TODAY'S LOCATIONS</h2>
+            ${locations.length > 0 ? `
+              <table>
+                <thead>
+                  <tr><th>STATE · COUNTY</th><th class="num">LEADS</th></tr>
+                </thead>
+                <tbody>
+                  ${locations.map(l => `
+                    <tr>
+                      <td class="label">${l.label}</td>
+                      <td class="num highlight">${l.count}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            ` : `<div class="empty-state">No location data yet today.</div>`}
+          </div>
         </div>
 
         ${renderFlags(val(data, 'flags', ''))}
@@ -147,45 +126,30 @@
       `);
     }
 
-    function parseSources(data, sources) {
-      const labels = {
-        fb_mkt: 'FB Mkt (in-house)',
-        realtor: 'Realtor',
-        mls: 'MLS',
-        investor_base: 'Investor Base'
-      };
-      return sources.map(s => ({
-        name: labels[s] || s,
-        net_new: val(data, `${s}_net_new`, '—'),
-        sourced: val(data, `${s}_sourced`, '—'),
-        appt_set: val(data, `${s}_appt_set`, '—'),
-        qualified: val(data, `${s}_qualified`, '—')
-      }));
-    }
-
-    function parseCampaigns(data) {
-      const cards = [];
-      for (let i = 1; i <= 10; i++) {
-        const name = data[`campaign_${i}_name`];
-        if (!name) continue;
-        cards.push({
-          name,
-          county: val(data, `campaign_${i}_county`, '—'),
-          leads: val(data, `campaign_${i}_leads`, '0'),
-          stage: val(data, `campaign_${i}_stage`, '—')
+    // Parse a newline list of "Label · Count" into array of {label, count}
+    function parseList(raw) {
+      if (!raw || !raw.trim()) return [];
+      return raw.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+          // Split on last " · " in case label contains "·"
+          const idx = line.lastIndexOf('·');
+          if (idx === -1) return { label: line, count: '—' };
+          return {
+            label: line.substring(0, idx).trim(),
+            count: line.substring(idx + 1).trim()
+          };
         });
-      }
-      return cards;
     }
 
     function parsePeople(data, names) {
       return names.map(n => ({
         name: n.charAt(0).toUpperCase() + n.slice(1),
-        dials: val(data, `${n}_dials`, '—'),
-        convos: val(data, `${n}_convos`, '—'),
-        appts: val(data, `${n}_appts`, '0'),
-        qual: val(data, `${n}_qual`, '0'),
-        contracts: val(data, `${n}_contracts`, '0')
+        sourced: val(data, `${n}_sourced`, '0'),
+        appt_set: val(data, `${n}_appt_set`, '0'),
+        qualified: val(data, `${n}_qualified`, '0'),
+        uc_w_emd: val(data, `${n}_uc_w_emd`, '0')
       }));
     }
 

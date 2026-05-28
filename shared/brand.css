@@ -362,6 +362,71 @@ table tbody tr.total td {
   line-height: 1.5;
 }
 
+.flags .flag-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.flags .flag-edit-btn {
+  background: transparent;
+  border: 1px solid var(--gs-gold);
+  color: var(--gs-gold);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 3px 10px;
+  cursor: pointer;
+  border-radius: 2px;
+}
+
+.flags .flag-edit-btn:hover {
+  background: var(--gs-gold);
+  color: white;
+}
+
+.flags .flag-edit textarea {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--gs-text);
+  line-height: 1.5;
+  padding: 8px;
+  border: 1px solid var(--gs-border);
+  border-radius: 2px;
+  background: white;
+  box-sizing: border-box;
+  resize: vertical;
+}
+
+.flags .flag-edit-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.flags .flag-save-btn,
+.flags .flag-cancel-btn {
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 4px 12px;
+  cursor: pointer;
+  border-radius: 2px;
+  border: 1px solid var(--gs-gold);
+}
+
+.flags .flag-save-btn {
+  background: var(--gs-gold);
+  color: white;
+}
+
+.flags .flag-cancel-btn {
+  background: transparent;
+  color: var(--gs-gold);
+}
+
 /* Footer */
 .card-footer {
   background: var(--gs-cream);

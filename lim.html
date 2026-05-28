@@ -19,8 +19,43 @@
     const TEAM_NAME = "Land Intake Team";
     const TEAM_LEAD = "Juan";
 
+    // Render flags section with editable textbox
+    function renderFlagsWithInput(defaultText) {
+      const text = defaultText && defaultText.trim() ? defaultText : 'None right now.';
+      return `
+        <div class="flags" style="position: relative;">
+          <div class="flag-label">⚑ FLAGS / NEEDS ANSHUL</div>
+          <div class="flag-body" id="flag-display">${text}</div>
+          <textarea id="flag-input" placeholder="Click here to edit flags before screenshotting..."
+            style="display: none; width: 100%; min-height: 60px; font-family: var(--font-body); font-size: 12px; color: var(--gs-text); line-height: 1.5; border: 1px solid var(--gs-gold); border-radius: 4px; padding: 8px; resize: vertical; box-sizing: border-box;"></textarea>
+          <button onclick="toggleFlagEdit()" id="flag-edit-btn"
+            style="position: absolute; top: 8px; right: 12px; background: var(--gs-dark-green); color: var(--gs-gold); border: none; padding: 4px 10px; border-radius: 4px; font-family: var(--font-body); font-size: 10px; font-weight: bold; cursor: pointer;">EDIT</button>
+        </div>
+      `;
+    }
+
+    // Toggle between display and edit mode for flags
+    function toggleFlagEdit() {
+      const display = document.getElementById('flag-display');
+      const input = document.getElementById('flag-input');
+      const btn = document.getElementById('flag-edit-btn');
+      if (input.style.display === 'none') {
+        input.value = display.textContent.trim();
+        display.style.display = 'none';
+        input.style.display = 'block';
+        btn.textContent = 'SAVE';
+        input.focus();
+      } else {
+        const newText = input.value.trim() || 'None right now.';
+        display.textContent = newText;
+        display.style.display = 'block';
+        input.style.display = 'none';
+        btn.textContent = 'EDIT';
+      }
+    }
+
     function renderCard(data) {
-      const agents = parseAgents(data, ['aladdin', 'juan', 'maryam', 'tina']);
+      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan']);
 
       const qualified = num(data, 'qualified_total');
       const target = num(data, 'qualified_target', 30);
@@ -122,7 +157,7 @@
           </div>
         ` : ''}
 
-        ${renderFlags(val(data, 'flags', ''))}
+        ${renderFlagsWithInput(val(data, 'flags', ''))}
         ${renderFooter()}
       `);
     }

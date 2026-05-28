@@ -21,7 +21,7 @@
 
     function renderCard(data) {
       const people = parsePeople(data, ['jose', 'gabriel']);
-      const sources = parseList(data['top_sources'], 2);
+      const sources = parseList(data['top_sources'], 4);
       const campaigns = parseList(data['campaigns_today'], 4);
 
       return wrapCard(`
@@ -63,14 +63,18 @@
               <thead>
                 <tr>
                   <th>SOURCE</th>
-                  <th class="num">LEADS TODAY</th>
+                  <th class="num">SOURCED</th>
+                  <th class="num">APPT SET</th>
+                  <th class="num">QUAL</th>
                 </tr>
               </thead>
               <tbody>
                 ${sources.map(s => `
                   <tr>
                     <td class="label">${s[0]}</td>
-                    <td class="num highlight">${s[1]}</td>
+                    <td class="num">${s[1]}</td>
+                    <td class="num">${s[2]}</td>
+                    <td class="num highlight">${s[3]}</td>
                   </tr>
                 `).join('')}
               </tbody>

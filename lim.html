@@ -163,6 +163,12 @@
     }
 
     function parseAgents(data, names) {
+      const fullNames = {
+        martina: 'Martina Misheal',
+        maryam: 'Maryam Selim',
+        ahmed: 'Ahmed Abdelbaset',
+        juan: 'Juan Pablo Larrea'
+      };
       return names.map(n => {
         const sourced = num(data, `${n}_sourced`);
         const phone = num(data, `${n}_phone_q`);
@@ -170,7 +176,7 @@
         const total = phone + text;
         const rate = sourced > 0 ? ((total / sourced) * 100).toFixed(1) + '%' : '—';
         return {
-          name: n.charAt(0).toUpperCase() + n.slice(1),
+          name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
           sourced,
           phone_q: phone,
           text_q: text,

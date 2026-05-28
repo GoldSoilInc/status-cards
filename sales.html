@@ -28,18 +28,22 @@
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${val(data, 'sourced', '0')}</div>
             <div class="kpi-label">Sourced</div>
           </div>
-          <div class="kpi-cell accent">
+          <div class="kpi-cell">
             <div class="kpi-value">${val(data, 'appt_set', '0')}</div>
             <div class="kpi-label">Appt Set</div>
           </div>
-          <div class="kpi-cell hero">
+          <div class="kpi-cell accent">
             <div class="kpi-value">${val(data, 'qualified', '0')}</div>
             <div class="kpi-label">Qualified</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${val(data, 'uc_w_emd', '0')}</div>
+            <div class="kpi-label">UC w/ EMD</div>
           </div>
         </div>
 
@@ -51,8 +55,6 @@
             <span><span class="label-bold">${val(data, 'contract_sent', '0')}</span> Contract Sent</span>
             <span style="color: var(--gs-border-soft);">·</span>
             <span><span class="label-bold">${val(data, 'uc_wo_emd', '0')}</span> UC w/o EMD</span>
-            <span style="color: var(--gs-border-soft);">·</span>
-            <span><span class="label-bold">${val(data, 'uc_w_emd', '0')}</span> UC w/ EMD</span>
           </div>
         </div>
 

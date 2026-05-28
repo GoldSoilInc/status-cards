@@ -16,7 +16,7 @@
     // ============================================
     // PASTE YOUR PUBLISHED CSV URL HERE
     // Get it from: Google Sheets → File → Share → Publish to web → CSV
-    const SHEET_URL = "PASTE_MARKETING_CSV_URL_HERE";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSOjQnyaLMy7LHQC-Nu22yjFHWf6SDVzfG-7OQTDFxh87_JJQTTEcbIWeod8yL2XsIbuJSI_pRKaMu3/pub?gid=55720707&single=true&output=csv";
 
     const TEAM_NAME = "Marketing Team";
     const TEAM_LEAD = "Ellyse";
@@ -54,14 +54,14 @@
             <h2>CAMPAIGNS LAUNCHED TODAY</h2>
             <table>
               <thead>
-                <tr><th>LISTING</th><th>LOCATION</th><th>CHANNELS</th></tr>
+                <tr><th>PERSON</th><th>CHANNEL</th><th>LISTING</th></tr>
               </thead>
               <tbody>
                 ${cards.map(c => `
                   <tr>
-                    <td class="label">${c.listing}</td>
-                    <td>${c.location}</td>
-                    <td>${c.channels}</td>
+                    <td class="label">${c.person}</td>
+                    <td>${c.channel}</td>
+                    <td>${c.listing}</td>
                   </tr>
                 `).join('')}
               </tbody>
@@ -100,19 +100,21 @@
       `);
     }
 
-    // Pull campaign rows from data: campaign_1_listing, campaign_1_location, etc.
+    // Parse campaigns_today: one campaign per line, format "Person · Channel · Listing"
     function parseCampaigns(data) {
-      const cards = [];
-      for (let i = 1; i <= 10; i++) {
-        const listing = data[`campaign_${i}_listing`];
-        if (!listing) continue;
-        cards.push({
-          listing,
-          location: val(data, `campaign_${i}_location`, '—'),
-          channels: val(data, `campaign_${i}_channels`, '—')
+      const raw = data['campaigns_today'];
+      if (!raw || !raw.trim()) return [];
+      return raw.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+          const parts = line.split('·').map(p => p.trim());
+          return {
+            person: parts[0] || '—',
+            channel: parts[1] || '—',
+            listing: parts[2] || '—'
+          };
         });
-      }
-      return cards;
     }
 
     function parsePeople(data, names) {

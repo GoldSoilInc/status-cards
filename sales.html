@@ -21,8 +21,8 @@
 
     function renderCard(data) {
       const people = parsePeople(data, ['jose', 'gabriel']);
-      const sources = parseList(data['top_sources']);
-      const locations = parseList(data['top_locations']);
+      const sources = parseList(data['top_sources'], 2);
+      const campaigns = parseList(data['campaigns_today'], 4);
 
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
@@ -57,6 +57,54 @@
         </div>
 
         <div class="section">
+          <h2>LEADS BY SOURCE</h2>
+          ${sources.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>SOURCE</th>
+                  <th class="num">LEADS TODAY</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sources.map(s => `
+                  <tr>
+                    <td class="label">${s[0]}</td>
+                    <td class="num highlight">${s[1]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `<div class="empty-state">No leads sourced yet today.</div>`}
+        </div>
+
+        <div class="section">
+          <h2>CAMPAIGNS & COUNTIES WORKED TODAY</h2>
+          ${campaigns.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>LISTING</th>
+                  <th>STATE</th>
+                  <th>COUNTY</th>
+                  <th class="num">LEADS</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${campaigns.map(c => `
+                  <tr>
+                    <td class="label">${c[0]}</td>
+                    <td>${c[1]}</td>
+                    <td>${c[2]}</td>
+                    <td class="num highlight">${c[3]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `<div class="empty-state">No campaign activity yet today.</div>`}
+        </div>
+
+        <div class="section">
           <h2>BY PERSON · TODAY</h2>
           <table>
             <thead>
@@ -82,64 +130,23 @@
           </table>
         </div>
 
-        <div class="section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-          <div>
-            <h2>TODAY'S SOURCES</h2>
-            ${sources.length > 0 ? `
-              <table>
-                <thead>
-                  <tr><th>SOURCE</th><th class="num">LEADS</th></tr>
-                </thead>
-                <tbody>
-                  ${sources.map(s => `
-                    <tr>
-                      <td class="label">${s.label}</td>
-                      <td class="num highlight">${s.count}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : `<div class="empty-state">No leads sourced yet today.</div>`}
-          </div>
-          <div>
-            <h2>TODAY'S LOCATIONS</h2>
-            ${locations.length > 0 ? `
-              <table>
-                <thead>
-                  <tr><th>STATE · COUNTY</th><th class="num">LEADS</th></tr>
-                </thead>
-                <tbody>
-                  ${locations.map(l => `
-                    <tr>
-                      <td class="label">${l.label}</td>
-                      <td class="num highlight">${l.count}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-              </table>
-            ` : `<div class="empty-state">No location data yet today.</div>`}
-          </div>
-        </div>
-
         ${renderFlags(val(data, 'flags', ''))}
         ${renderFooter()}
       `);
     }
 
-    // Parse a newline list of "Label · Count" into array of {label, count}
-    function parseList(raw) {
+    // Parse a multi-line " · " separated list into an array of N-element arrays.
+    // expectedFields = how many "·"-separated fields per line.
+    function parseList(raw, expectedFields) {
       if (!raw || !raw.trim()) return [];
       return raw.split('\n')
         .map(line => line.trim())
         .filter(line => line.length > 0)
         .map(line => {
-          // Split on last " · " in case label contains "·"
-          const idx = line.lastIndexOf('·');
-          if (idx === -1) return { label: line, count: '—' };
-          return {
-            label: line.substring(0, idx).trim(),
-            count: line.substring(idx + 1).trim()
-          };
+          const parts = line.split('·').map(p => p.trim());
+          // Pad to expectedFields if short
+          while (parts.length < expectedFields) parts.push('—');
+          return parts;
         });
     }
 
@@ -156,13 +163,6 @@
     async function init() {
       const root = document.getElementById('root');
       root.innerHTML = renderLoading();
-
-      if (SHEET_URL === "PASTE_SALES_CSV_URL_HERE") {
-        root.innerHTML = renderError(
-          "Sheet URL not yet configured. Open sales.html and paste your published CSV URL into SHEET_URL."
-        );
-        return;
-      }
 
       try {
         const data = await loadSheetData(SHEET_URL);

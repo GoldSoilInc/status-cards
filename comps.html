@@ -14,22 +14,21 @@
     // ============================================
     // COMPS TEAM CARD
     // ============================================
-    const SHEET_URL = "PASTE_COMPS_CSV_URL_HERE";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1539306527&single=true&output=csv";
 
     const TEAM_NAME = "Comps Team";
     const TEAM_LEAD = "Edcel";
 
-    function renderCard(data) {
-      const people = parsePeople(data, ['nathan', 'erl', 'edcel', 'rezello']);
+    // Person key → display name
+    const TEAM = [
+      { key: 'edcel',     name: 'Edcel' },
+      { key: 'nathaniel', name: 'Nathaniel' },
+      { key: 'erl',       name: 'Erl' },
+      { key: 'rezello',   name: 'Rezello' }
+    ];
 
-      const processed = num(data, 'processed');
-      const analyzed = num(data, 'analyzed');
-      const offers = num(data, 'offers_prepared');
-      const fantasy = num(data, 'fantasyland');
-      const rejected = num(data, 'rejected');
-      const pending = num(data, 'pending');
-      const offerRate = analyzed > 0 ? Math.round((offers / analyzed) * 100) : 0;
-      const unaccounted = Math.max(0, analyzed - offers - fantasy - rejected - pending);
+    function renderCard(data) {
+      const people = parsePeople(data, TEAM);
 
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
@@ -37,54 +36,33 @@
 
         <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
-            <div class="kpi-value">${processed}</div>
+            <div class="kpi-value">${val(data, 'processed', '0')}</div>
             <div class="kpi-label">Processed</div>
           </div>
           <div class="kpi-cell">
-            <div class="kpi-value">${analyzed}</div>
+            <div class="kpi-value">${val(data, 'analyzed', '0')}</div>
             <div class="kpi-label">Analyzed</div>
           </div>
           <div class="kpi-cell accent">
-            <div class="kpi-value">${offers}</div>
-            <div class="kpi-label">Offers</div>
+            <div class="kpi-value">${val(data, 'offers_prepared', '0')}</div>
+            <div class="kpi-label">Offers Prepared</div>
           </div>
           <div class="kpi-cell hero">
-            <div class="kpi-value">${offerRate}%</div>
+            <div class="kpi-value">${val(data, 'offer_rate', '0')}%</div>
             <div class="kpi-label">Offer Rate</div>
           </div>
         </div>
 
         <div class="section">
-          <h2>DISPOSITION — ${analyzed} ANALYZED</h2>
-          <div class="inline-stat">
-            <span class="label-bold">Offers:</span> ${offers} &nbsp;·&nbsp;
-            <span class="label-bold">Fantasy:</span> ${fantasy} &nbsp;·&nbsp;
-            <span class="label-bold">Rejected:</span> ${rejected} &nbsp;·&nbsp;
-            <span class="label-bold">Pending:</span> ${pending}
-            ${unaccounted > 0 ? `&nbsp;·&nbsp; <span style="color: var(--gs-gold); font-weight: bold;">Unaccounted: ${unaccounted}</span>` : ''}
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>SUBDIVIDES</h2>
-          <div class="inline-stat">
-            <span class="label-bold">${val(data, 'subdivides_counties_scraped', '0')}</span> county scraped &nbsp;·&nbsp;
-            <span class="label-bold">${val(data, 'subdivides_fresh_leads', '0')}</span> fresh leads &nbsp;·&nbsp;
-            <span class="label-bold">${val(data, 'subdivides_listed_mls', '0')}</span> listed on MLS
-          </div>
-        </div>
-
-        <div class="section">
-          <h2>BY PERSON</h2>
+          <h2>BY PERSON · TODAY</h2>
           <table>
             <thead>
               <tr>
                 <th>PERSON</th>
-                <th class="num">PROC</th>
-                <th class="num">ANLZ</th>
-                <th class="num">OFFER</th>
-                <th class="num">FANTASY</th>
-                <th class="num">REJ</th>
+                <th class="num">PROCESSED</th>
+                <th class="num">ANALYZED</th>
+                <th class="num">OFFERS PREPARED</th>
+                <th class="num">OFFER RATE</th>
               </tr>
             </thead>
             <tbody>
@@ -93,19 +71,10 @@
                   <td class="label">${p.name}</td>
                   <td class="num">${p.processed}</td>
                   <td class="num">${p.analyzed}</td>
-                  <td class="num highlight">${p.offers}</td>
-                  <td class="num">${p.fantasy}</td>
-                  <td class="num">${p.rejected}</td>
+                  <td class="num highlight">${p.offers_prepared}</td>
+                  <td class="num">${p.offer_rate}%</td>
                 </tr>
               `).join('')}
-              <tr class="total">
-                <td>TOTAL</td>
-                <td class="num">${processed}</td>
-                <td class="num">${analyzed}</td>
-                <td class="num">${offers}</td>
-                <td class="num">${fantasy}</td>
-                <td class="num">${rejected}</td>
-              </tr>
             </tbody>
           </table>
         </div>
@@ -115,27 +84,19 @@
       `);
     }
 
-    function parsePeople(data, names) {
-      return names.map(n => ({
-        name: n.charAt(0).toUpperCase() + n.slice(1),
-        processed: val(data, `${n}_processed`, '—'),
-        analyzed: val(data, `${n}_analyzed`, '0'),
-        offers: val(data, `${n}_offers`, '0'),
-        fantasy: val(data, `${n}_fantasy`, '0'),
-        rejected: val(data, `${n}_rejected`, '0')
+    function parsePeople(data, team) {
+      return team.map(t => ({
+        name: t.name,
+        processed: val(data, `${t.key}_processed`, '0'),
+        analyzed: val(data, `${t.key}_analyzed`, '0'),
+        offers_prepared: val(data, `${t.key}_offers_prepared`, '0'),
+        offer_rate: val(data, `${t.key}_offer_rate`, '0')
       }));
     }
 
     async function init() {
       const root = document.getElementById('root');
       root.innerHTML = renderLoading();
-
-      if (SHEET_URL === "PASTE_COMPS_CSV_URL_HERE") {
-        root.innerHTML = renderError(
-          "Sheet URL not yet configured. Open comps.html and paste your published CSV URL into SHEET_URL."
-        );
-        return;
-      }
 
       try {
         const data = await loadSheetData(SHEET_URL);

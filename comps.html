@@ -62,6 +62,8 @@
                 <th class="num">PROCESSED</th>
                 <th class="num">ANALYZED</th>
                 <th class="num">OFFERS PREPARED</th>
+                <th class="num">FANTASYLAND</th>
+                <th class="num">REJECTED</th>
                 <th class="num">OFFER RATE</th>
               </tr>
             </thead>
@@ -72,6 +74,8 @@
                   <td class="num">${p.processed}</td>
                   <td class="num">${p.analyzed}</td>
                   <td class="num highlight">${p.offers_prepared}</td>
+                  <td class="num">${p.fantasyland}</td>
+                  <td class="num">${p.rejected}</td>
                   <td class="num">${p.offer_rate}%</td>
                 </tr>
               `).join('')}
@@ -90,6 +94,8 @@
         processed: val(data, `${t.key}_processed`, '0'),
         analyzed: val(data, `${t.key}_analyzed`, '0'),
         offers_prepared: val(data, `${t.key}_offers_prepared`, '0'),
+        fantasyland: val(data, `${t.key}_fantasyland`, '0'),
+        rejected: val(data, `${t.key}_rejected`, '0'),
         offer_rate: val(data, `${t.key}_offer_rate`, '0')
       }));
     }

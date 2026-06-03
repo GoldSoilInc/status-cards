@@ -57,7 +57,7 @@
         const dMet = dayVal >= dayT;
         const wMet = wkVal >= wkT;
         const day = `<span style="display:inline-block; padding:2px 7px; border-radius:10px; background:${dMet ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${dMet ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${dMet ? '\u2713 ' : ''}DAY ${dayT}</span>`;
-        const wk = `<span style="display:inline-block; padding:2px 7px; border-radius:10px; background:${wMet ? 'var(--gs-dark-green)' : 'var(--gs-cream)'}; color:${wMet ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; border:${wMet ? 'none' : '0.5px solid var(--gs-gold)'}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${wMet ? '\u2713 ' : ''}WK ${wkT}</span>`;
+        const wk = `<span style="display:inline-block; padding:2px 7px; border-radius:10px; background:${wMet ? 'var(--gs-dark-green)' : 'var(--gs-cream)'}; color:${wMet ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; border:${wMet ? 'none' : '0.5px solid var(--gs-gold)'}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${wMet ? '\u2713 ' : ''}WK ${wkVal} / ${wkT}</span>`;
         return `<div style="margin-top:6px; line-height:1.9;">${day} ${wk}</div>`;
       };
 

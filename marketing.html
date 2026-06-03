@@ -21,26 +21,59 @@
     const TEAM_NAME = "Marketing Team";
     const TEAM_LEAD = "Ellyse";
 
+    // Set true by renderCard when all daily goals are met; gates the confetti.
+    let GOALS_MET = false;
+
     // Render Marketing card from data
     function renderCard(data) {
       const cards = parseCampaigns(data);
       const people = parsePeople(data, ['ellyse', 'shiela']);
 
-      // Daily goals (sheet-overridable; fallbacks are the finalized targets)
-      const campaignsVal = num(data, 'campaigns_launched');
-      const campaignsTarget = num(data, 'campaigns_target', 10);
-      const listingsVal = num(data, 'listings_touched');
-      const listingsTarget = num(data, 'listings_target', 6);
+      // ---- KPI values (today) ----
+      const campaignsVal  = num(data, 'campaigns_launched');
+      const listingsVal   = num(data, 'listings_touched');
       const priceDropsVal = num(data, 'price_drops');
-      const priceDropsTarget = num(data, 'price_drops_target', 3);
 
-      // Small goal pill: gold while below target, green ✓ when met
-      const goalPill = (value, target) => {
-        const met = value >= target;
-        const bg = met ? 'var(--gs-dark-green)' : 'var(--gs-gold)';
-        const fg = met ? 'var(--gs-gold)' : 'var(--gs-dark-green)';
-        const label = met ? `\u2713 GOAL ${target}` : `GOAL ${target}`;
-        return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${bg}; color:${fg}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${label}</div>`;
+      // ---- Week-to-date (add *_week formulas to the metrics sheet; falls back to today) ----
+      const campaignsWk  = num(data, 'campaigns_week',   campaignsVal);
+      const listingsWk   = num(data, 'listings_week',    listingsVal);
+      const priceDropsWk = num(data, 'price_drops_week', priceDropsVal);
+
+      // ---- Daily + weekly targets (sheet-overridable; fallbacks set with Anshul) ----
+      const campaignsTarget  = num(data, 'campaigns_target', 10);
+      const listingsTarget   = num(data, 'listings_target', 6);
+      const priceDropsTarget = num(data, 'price_drops_target', 3);
+      const campaignsTargetWk  = num(data, 'campaigns_target_week', 50);
+      const listingsTargetWk   = num(data, 'listings_target_week', 30);
+      const priceDropsTargetWk = num(data, 'price_drops_target_week', 15);
+
+      const allGoalsMet = campaignsVal >= campaignsTarget
+        && listingsVal >= listingsTarget
+        && priceDropsVal >= priceDropsTarget;
+      GOALS_MET = allGoalsMet;
+
+      // Daily + weekly goal pills. Daily: gold -> green when met. Weekly: cream -> green when met.
+      const goalPill = (dayVal, dayT, wkVal, wkT) => {
+        const dMet = dayVal >= dayT;
+        const wMet = wkVal >= wkT;
+        const day = `<span style="display:inline-block; padding:2px 7px; border-radius:10px; background:${dMet ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${dMet ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${dMet ? '\u2713 ' : ''}DAY ${dayT}</span>`;
+        const wk = `<span style="display:inline-block; padding:2px 7px; border-radius:10px; background:${wMet ? 'var(--gs-dark-green)' : 'var(--gs-cream)'}; color:${wMet ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; border:${wMet ? 'none' : '0.5px solid var(--gs-gold)'}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${wMet ? '\u2713 ' : ''}WK ${wkT}</span>`;
+        return `<div style="margin-top:6px; line-height:1.9;">${day} ${wk}</div>`;
+      };
+
+      // Per-person marker. Reward (🎉) shows whenever earned; "behind" only at EOD
+      // so nobody gets a snail at 10 AM. Per-person target overridable via {name}_campaigns_target.
+      const isEOD = getCurrentTimeSlot() === '5pm';
+      const personShare = Math.ceil(campaignsTarget / Math.max(1, people.length));
+      const personMarker = (p) => {
+        const t = num(data, `${p.key}_campaigns_target`, personShare);
+        if (p.campaigns >= t) {
+          return ` <span style="display:inline-block; padding:1px 7px; border-radius:9px; background:var(--gs-gold); color:var(--gs-dark-green); font-size:9px; font-weight:bold; vertical-align:1px;">\uD83C\uDF89 ON TARGET</span>`;
+        }
+        if (isEOD) {
+          return ` <span style="display:inline-block; padding:1px 7px; border-radius:9px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:9px; font-weight:bold; vertical-align:1px;">\uD83D\uDC0C BEHIND</span>`;
+        }
+        return '';
       };
 
       return wrapCard(`
@@ -51,17 +84,17 @@
           <div class="kpi-cell">
             <div class="kpi-value">${campaignsVal}</div>
             <div class="kpi-label">Campaigns Launched</div>
-            ${goalPill(campaignsVal, campaignsTarget)}
+            ${goalPill(campaignsVal, campaignsTarget, campaignsWk, campaignsTargetWk)}
           </div>
           <div class="kpi-cell">
             <div class="kpi-value">${listingsVal}</div>
             <div class="kpi-label">Listings Touched</div>
-            ${goalPill(listingsVal, listingsTarget)}
+            ${goalPill(listingsVal, listingsTarget, listingsWk, listingsTargetWk)}
           </div>
           <div class="kpi-cell accent">
             <div class="kpi-value">${priceDropsVal}</div>
             <div class="kpi-label">Price Drops</div>
-            ${goalPill(priceDropsVal, priceDropsTarget)}
+            ${goalPill(priceDropsVal, priceDropsTarget, priceDropsWk, priceDropsTargetWk)}
           </div>
           <div class="kpi-cell hero">
             <div class="kpi-value">${val(data, 'in_progress', '0')}</div>
@@ -104,7 +137,7 @@
             <tbody>
               ${people.map(p => `
                 <tr>
-                  <td class="label">${p.name}</td>
+                  <td class="label">${p.name}${personMarker(p)}</td>
                   <td class="num highlight">${p.campaigns}</td>
                   <td class="num">${p.listings}</td>
                   <td class="num">${p.price_drops}</td>
@@ -115,7 +148,10 @@
           </table>
         </div>
 
-        ${renderFlags(val(data, 'flags', ''))}
+        ${allGoalsMet ? `
+        <div style="text-align:center; padding:13px 0 15px; background:var(--gs-cream); border-top:0.5px solid var(--gs-border-soft, #d8d2c0);">
+          <span style="font-family:var(--font-display); color:var(--gs-dark-green); font-weight:bold; font-size:14px;">\uD83C\uDF89 ${TEAM_NAME} hit every goal today!</span>
+        </div>` : ''}
         ${renderFooter()}
       `);
     }
@@ -139,12 +175,70 @@
 
     function parsePeople(data, names) {
       return names.map(n => ({
+        key: n,
         name: n.charAt(0).toUpperCase() + n.slice(1),
-        campaigns: val(data, `${n}_campaigns`, '0'),
-        listings: val(data, `${n}_listings`, '0'),
-        price_drops: val(data, `${n}_price_drops`, '0'),
-        wip: val(data, `${n}_wip`, '0')
+        campaigns: num(data, `${n}_campaigns`),
+        listings: num(data, `${n}_listings`),
+        price_drops: num(data, `${n}_price_drops`),
+        wip: num(data, `${n}_wip`)
       }));
+    }
+
+    // Self-contained confetti (no external library). Draws on a canvas overlaid
+    // on the card, in GoldSoil colors, then removes itself when finished.
+    // Note: live-page only — a Slack screenshot won't capture the animation.
+    function fireCelebration() {
+      const card = document.querySelector('.card');
+      if (!card) return;
+      const prev = card.querySelector('#gs-confetti');
+      if (prev) prev.remove();
+      card.style.position = 'relative';
+      const canvas = document.createElement('canvas');
+      canvas.id = 'gs-confetti';
+      canvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:50;';
+      card.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#C4A22F', '#1A472A', '#e0c66a', '#8a9a8e'];
+      const rect = () => card.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const r0 = rect();
+      canvas.width = Math.max(1, Math.floor(r0.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r0.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const parts = [];
+      for (let i = 0; i < 150; i++) {
+        parts.push({
+          x: r0.width * (0.1 + Math.random() * 0.8),
+          y: r0.height + 10,
+          vx: (Math.random() - 0.5) * 7,
+          vy: -(7 + Math.random() * 8),
+          g: 0.22 + Math.random() * 0.08,
+          s: 4 + Math.random() * 5,
+          rot: Math.random() * 6.28,
+          vr: (Math.random() - 0.5) * 0.35,
+          c: colors[(Math.random() * colors.length) | 0],
+          life: 0, max: 95 + Math.random() * 45
+        });
+      }
+      function tick() {
+        const r = rect();
+        ctx.clearRect(0, 0, r.width, r.height);
+        let alive = false;
+        for (const p of parts) {
+          if (p.life > p.max) continue;
+          p.life++; p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          if (p.y < r.height + 50) alive = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, 1 - p.life / p.max);
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+          ctx.restore();
+        }
+        if (alive) requestAnimationFrame(tick);
+        else { ctx.clearRect(0, 0, r.width, r.height); canvas.remove(); }
+      }
+      requestAnimationFrame(tick);
     }
 
     // Load and render
@@ -162,6 +256,7 @@
       try {
         const data = await loadSheetData(SHEET_URL);
         root.innerHTML = renderCard(data);
+        if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {
         root.innerHTML = renderError(err.message);
       }

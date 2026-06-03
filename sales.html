@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // SALES TEAM CARD
+    // ============================================
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=332866919&single=true&output=csv";
+
+    const TEAM_NAME = "Sales Team";
+    const TEAM_LEAD = "Jose / Gabriel";
+
+    // Set true by renderCard when a deal closes today (UC w/ EMD); gates the confetti.
+    let GOALS_MET = false;
+
+    function renderCard(data) {
+      const people = parsePeople(data, ['jose', 'gabriel']);
+      const sources = parseList(data['top_sources'], 4);
+      const campaigns = parseList(data['campaigns_today'], 4);
+
+      // ---- Funnel values (today) ----
+      const sourced=num(data,'sourced'), apptSet=num(data,'appt_set'), qualified=num(data,'qualified'),
+            negotiation=num(data,'negotiation'), contractSent=num(data,'contract_sent'),
+            ucWoEmd=num(data,'uc_wo_emd'), ucWEmd=num(data,'uc_w_emd');
+
+      // ---- Daily targets (sheet-overridable; set with Anshul) ----
+      const T = {
+        sourced: num(data,'sourced_target',15),            appt_set: num(data,'appt_set_target',2),
+        qualified: num(data,'qualified_target',1),         negotiation: num(data,'negotiation_target',1),
+        contract_sent: num(data,'contract_sent_target',1), uc_wo_emd: num(data,'uc_wo_emd_target',1),
+        uc_w_emd: num(data,'uc_w_emd_target',1)
+      };
+
+      // Confetti fires when the team closes a deal today (UC w/ EMD hits target).
+      GOALS_MET = ucWEmd >= T.uc_w_emd;
+
+      const goalPill = (value, target) =>
+        `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${value>=target ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${value>=target ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${value>=target ? '\u2713 ' : ''}GOAL ${target}</div>`;
+
+      // Optional dollar deal-spread line under the UC boxes (shown only if the metric exists).
+      const spreadLine = (key) => {
+        const s = val(data, key, '');
+        return s ? `<div style="margin-top:5px; font-family:var(--font-body); font-size:10px; color:var(--gs-faint);">${s} spread</div>` : '';
+      };
+
+      const box = (value, label, target, opts) => {
+        opts = opts || {};
+        return `<div class="kpi-cell${opts.cls ? ' '+opts.cls : ''}">
+            <div class="kpi-value">${value}</div>
+            <div class="kpi-label">${label}</div>
+            ${goalPill(value, target)}
+            ${opts.spread ? spreadLine(opts.spread) : ''}
+          </div>`;
+      };
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
+          ${box(sourced, 'Net New / Sourced', T.sourced)}
+          ${box(apptSet, 'Appt Set', T.appt_set)}
+          ${box(qualified, 'Qualified', T.qualified, {cls:'accent'})}
+          ${box(negotiation, 'Negotiation', T.negotiation)}
+        </div>
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+          ${box(contractSent, 'Contract Sent', T.contract_sent, {cls:'accent'})}
+          ${box(ucWoEmd, 'UC w/o EMD', T.uc_wo_emd, {spread:'uc_wo_emd_spread'})}
+          ${box(ucWEmd, 'UC w/ EMD', T.uc_w_emd, {cls:'hero', spread:'uc_w_emd_spread'})}
+        </div>
+
+        <div class="section">
+          <h2>LEADS BY SOURCE</h2>
+          ${sources.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>SOURCE</th>
+                  <th class="num">SOURCED</th>
+                  <th class="num">APPT SET</th>
+                  <th class="num">QUAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sources.map(s => `
+                  <tr>
+                    <td class="label">${s[0]}</td>
+                    <td class="num">${s[1]}</td>
+                    <td class="num">${s[2]}</td>
+                    <td class="num highlight">${s[3]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `<div class="empty-state">No leads sourced yet today.</div>`}
+        </div>
+
+        <div class="section">
+          <h2>CAMPAIGNS & COUNTIES WORKED TODAY</h2>
+          ${campaigns.length > 0 ? `
+            <table>
+              <thead>
+                <tr>
+                  <th>LISTING</th>
+                  <th>STATE</th>
+                  <th>COUNTY</th>
+                  <th class="num">LEADS</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${campaigns.map(c => `
+                  <tr>
+                    <td class="label">${c[0]}</td>
+                    <td>${c[1]}</td>
+                    <td>${c[2]}</td>
+                    <td class="num highlight">${c[3]}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          ` : `<div class="empty-state">No campaign activity yet today.</div>`}
+        </div>
+
+        <div class="section">
+          <h2>BY PERSON · TODAY</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>PERSON</th>
+                <th class="num">SOURCED</th>
+                <th class="num">APPT SET</th>
+                <th class="num">QUALIFIED</th>
+                <th class="num">UC W/ EMD</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${people.map(p => `
+                <tr>
+                  <td class="label">${p.name}${Number(p.uc_w_emd) >= 1 ? ' <span style="font-size:13px;">\uD83C\uDF89</span>' : ''}</td>
+                  <td class="num">${p.sourced}</td>
+                  <td class="num">${p.appt_set}</td>
+                  <td class="num highlight">${p.qualified}</td>
+                  <td class="num">${p.uc_w_emd}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        ${renderFooter()}
+      `);
+    }
+
+    // Parse a multi-line " · " separated list into an array of N-element arrays.
+    // expectedFields = how many "·"-separated fields per line.
+    function parseList(raw, expectedFields) {
+      if (!raw || !raw.trim()) return [];
+      return raw.split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .map(line => {
+          const parts = line.split('·').map(p => p.trim());
+          // Pad to expectedFields if short
+          while (parts.length < expectedFields) parts.push('—');
+          return parts;
+        });
+    }
+
+    function parsePeople(data, names) {
+      return names.map(n => ({
+        name: n.charAt(0).toUpperCase() + n.slice(1),
+        sourced: val(data, `${n}_sourced`, '0'),
+        appt_set: val(data, `${n}_appt_set`, '0'),
+        qualified: val(data, `${n}_qualified`, '0'),
+        uc_w_emd: val(data, `${n}_uc_w_emd`, '0')
+      }));
+    }
+
+    // Confetti burst — fires on a closed deal (UC w/ EMD). Live page only; won't show in a screenshot.
+    function fireCelebration() {
+      const card = document.querySelector('.card');
+      if (!card) return;
+      card.style.position = 'relative';
+      const canvas = document.createElement('canvas');
+      canvas.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:50;';
+      canvas.width = card.offsetWidth; canvas.height = card.offsetHeight;
+      card.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#C4A22F', '#1A472A', '#e0c66a', '#8a9a8e'];
+      const parts = Array.from({length: 150}, () => ({
+        x: Math.random() * canvas.width,
+        y: canvas.height + Math.random() * 40,
+        vx: (Math.random() - 0.5) * 6,
+        vy: -(Math.random() * 9 + 7),
+        size: Math.random() * 6 + 3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.3
+      }));
+      let frame = 0;
+      (function tick() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        parts.forEach(p => {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.28; p.rot += p.vr;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.color; ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+          ctx.restore();
+        });
+        if (++frame < 130) requestAnimationFrame(tick); else canvas.remove();
+      })();
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      try {
+        const data = await loadSheetData(SHEET_URL);
+        root.innerHTML = renderCard(data);
+        if (GOALS_MET) requestAnimationFrame(fireCelebration);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

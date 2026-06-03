@@ -26,22 +26,42 @@
       const cards = parseCampaigns(data);
       const people = parsePeople(data, ['ellyse', 'shiela']);
 
+      // Daily goals (sheet-overridable; fallbacks are the finalized targets)
+      const campaignsVal = num(data, 'campaigns_launched');
+      const campaignsTarget = num(data, 'campaigns_target', 10);
+      const listingsVal = num(data, 'listings_touched');
+      const listingsTarget = num(data, 'listings_target', 6);
+      const priceDropsVal = num(data, 'price_drops');
+      const priceDropsTarget = num(data, 'price_drops_target', 3);
+
+      // Small goal pill: gold while below target, green ✓ when met
+      const goalPill = (value, target) => {
+        const met = value >= target;
+        const bg = met ? 'var(--gs-dark-green)' : 'var(--gs-gold)';
+        const fg = met ? 'var(--gs-gold)' : 'var(--gs-dark-green)';
+        const label = met ? `\u2713 GOAL ${target}` : `GOAL ${target}`;
+        return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${bg}; color:${fg}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${label}</div>`;
+      };
+
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
         <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
-            <div class="kpi-value">${val(data, 'campaigns_launched', '0')}</div>
+            <div class="kpi-value">${campaignsVal}</div>
             <div class="kpi-label">Campaigns Launched</div>
+            ${goalPill(campaignsVal, campaignsTarget)}
           </div>
           <div class="kpi-cell">
-            <div class="kpi-value">${val(data, 'listings_touched', '0')}</div>
+            <div class="kpi-value">${listingsVal}</div>
             <div class="kpi-label">Listings Touched</div>
+            ${goalPill(listingsVal, listingsTarget)}
           </div>
           <div class="kpi-cell accent">
-            <div class="kpi-value">${val(data, 'price_drops', '0')}</div>
+            <div class="kpi-value">${priceDropsVal}</div>
             <div class="kpi-label">Price Drops</div>
+            ${goalPill(priceDropsVal, priceDropsTarget)}
           </div>
           <div class="kpi-cell hero">
             <div class="kpi-value">${val(data, 'in_progress', '0')}</div>

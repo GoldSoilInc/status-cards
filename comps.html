@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comps — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // COMPS TEAM CARD
+    // ============================================
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1539306527&single=true&output=csv";
+
+    const TEAM_NAME = "Comps Team";
+    const TEAM_LEAD = "Edcel";
+
+    // Person key → display name
+    const TEAM = [
+      { key: 'edcel',     name: 'Edcel' },
+      { key: 'nathaniel', name: 'Nathaniel' },
+      { key: 'erl',       name: 'Erl' },
+      { key: 'rezello',   name: 'Rezello' }
+    ];
+
+    // Set true by renderCard when the completion rate hits 100%; gates the confetti.
+    let GOALS_MET = false;
+
+    function renderCard(data) {
+      const people = parsePeople(data, TEAM);
+
+      // ---- KPI values (today) ----
+      const processedVal = num(data, 'processed');
+      const analyzedVal  = num(data, 'analyzed');
+      const offersVal    = num(data, 'offers_prepared');
+
+      // ---- Daily targets (sheet-overridable; set with Anshul) ----
+      const processedTarget = num(data, 'processed_target', 30);
+      const analyzedTarget  = num(data, 'analyzed_target', 30);
+      const offersTarget    = num(data, 'offers_target', 15);
+
+      // ---- Completion rate = Processed / LIM Qualified (today), target 90% ----
+      // lim_qualified is pulled from the LIM metrics tab (same workbook).
+      const limQualified = num(data, 'lim_qualified', 0);
+      const rateTarget   = num(data, 'process_rate_target', 90);
+      const rateKnown    = limQualified > 0;
+      const processRate  = rateKnown ? Math.round((processedVal / limQualified) * 100) : 0;
+      const rateDisplay  = Math.min(processRate, 100);
+
+      // Confetti only at the 100% "Hallelujah" tier.
+      GOALS_MET = rateKnown && processRate >= 100;
+
+      // Count goal pill (gold -> green when target met)
+      const goalPill = (value, target) => {
+        const met = value >= target;
+        return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}GOAL ${target}</div>`;
+      };
+
+      // Completion-rate pill with tiered faces: 100% 🎉, 90-99% ✓, 80s neutral, <80 behind.
+      const ratePill = () => {
+        if (!rateKnown) {
+          return `<div style="display:inline-block; margin-top:5px; padding:2px 8px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">RATE \u2014 \u00b7 GOAL ${rateTarget}%</div>`;
+        }
+        let bg, fg, border, face;
+        if (processRate >= 100)     { bg='var(--gs-dark-green)'; fg='var(--gs-gold)'; border='none'; face='\uD83C\uDF89 '; }
+        else if (processRate >= 90) { bg='var(--gs-dark-green)'; fg='var(--gs-gold)'; border='none'; face='\u2713 '; }
+        else if (processRate >= 80) { bg='var(--gs-cream)'; fg='var(--gs-dark-green)'; border='0.5px solid var(--gs-gold)'; face=''; }
+        else                        { bg='var(--gs-cream)'; fg='var(--gs-dark-green)'; border='0.5px solid var(--gs-gold)'; face='\uD83D\uDC0C '; }
+        return `<div style="display:inline-block; margin-top:5px; padding:2px 8px; border-radius:10px; background:${bg}; color:${fg}; border:${border}; font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">${face}${processedVal}/${limQualified} = ${rateDisplay}% \u00b7 GOAL ${rateTarget}%</div>`;
+      };
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${processedVal}</div>
+            <div class="kpi-label">Processed</div>
+            <div>${goalPill(processedVal, processedTarget)}</div>
+            <div>${ratePill()}</div>
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value">${analyzedVal}</div>
+            <div class="kpi-label">Analyzed</div>
+            ${goalPill(analyzedVal, analyzedTarget)}
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${offersVal}</div>
+            <div class="kpi-label">Offers Prepared</div>
+            ${goalPill(offersVal, offersTarget)}
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${val(data, 'offer_rate', '0')}%</div>
+            <div class="kpi-label">Offer Rate</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>BY PERSON · TODAY</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>PERSON</th>
+                <th class="num">PROCESSED</th>
+                <th class="num">ANALYZED</th>
+                <th class="num">OFFERS PREPARED</th>
+                <th class="num">FANTASYLAND</th>
+                <th class="num">REJECTED</th>
+                <th class="num">OFFER RATE</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${people.map(p => `
+                <tr>
+                  <td class="label">${p.name}</td>
+                  <td class="num">${p.processed}</td>
+                  <td class="num">${p.analyzed}</td>
+                  <td class="num highlight">${p.offers_prepared}</td>
+                  <td class="num">${p.fantasyland}</td>
+                  <td class="num">${p.rejected}</td>
+                  <td class="num">${p.offer_rate}%</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <h2>SUBDIVIDES</h2>
+          <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+            <div style="background: var(--gs-cream); padding: 16px 20px; border-left: 4px solid var(--gs-gold);">
+              <div style="font-family: var(--font-display); font-weight: bold; font-size: 28px; color: var(--gs-dark-green); line-height: 1;">${val(data, 'subdivides_counties_scraped', '0')}</div>
+              <div style="font-family: var(--font-display); font-size: 10px; letter-spacing: 1.5px; color: var(--gs-dark-green); margin-top: 6px; font-weight: bold;">COUNTIES SCRAPED</div>
+            </div>
+            <div style="background: var(--gs-cream); padding: 16px 20px; border-left: 4px solid var(--gs-gold);">
+              <div style="font-family: var(--font-display); font-weight: bold; font-size: 28px; color: var(--gs-dark-green); line-height: 1;">${val(data, 'subdivides_fresh_leads', '0')}</div>
+              <div style="font-family: var(--font-display); font-size: 10px; letter-spacing: 1.5px; color: var(--gs-dark-green); margin-top: 6px; font-weight: bold;">FRESH LEADS</div>
+            </div>
+            <div style="background: var(--gs-cream); padding: 16px 20px; border-left: 4px solid var(--gs-gold);">
+              <div style="font-family: var(--font-display); font-weight: bold; font-size: 28px; color: var(--gs-dark-green); line-height: 1;">${val(data, 'subdivides_listed_mls', '0')}</div>
+              <div style="font-family: var(--font-display); font-size: 10px; letter-spacing: 1.5px; color: var(--gs-dark-green); margin-top: 6px; font-weight: bold;">LISTED ON MLS</div>
+            </div>
+          </div>
+        </div>
+
+        ${renderFooter()}
+      `);
+    }
+
+    function parsePeople(data, team) {
+      return team.map(t => ({
+        name: t.name,
+        processed: val(data, `${t.key}_processed`, '0'),
+        analyzed: val(data, `${t.key}_analyzed`, '0'),
+        offers_prepared: val(data, `${t.key}_offers_prepared`, '0'),
+        fantasyland: val(data, `${t.key}_fantasyland`, '0'),
+        rejected: val(data, `${t.key}_rejected`, '0'),
+        offer_rate: val(data, `${t.key}_offer_rate`, '0')
+      }));
+    }
+
+    // Self-contained confetti (GoldSoil colors), drawn on a canvas over the card,
+    // removed when finished. Live-page only — a Slack screenshot won't catch it.
+    function fireCelebration() {
+      const card = document.querySelector('.card');
+      if (!card) return;
+      const prev = card.querySelector('#gs-confetti');
+      if (prev) prev.remove();
+      card.style.position = 'relative';
+      const canvas = document.createElement('canvas');
+      canvas.id = 'gs-confetti';
+      canvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:50;';
+      card.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#C4A22F', '#1A472A', '#e0c66a', '#8a9a8e'];
+      const rect = () => card.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const r0 = rect();
+      canvas.width = Math.max(1, Math.floor(r0.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r0.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const parts = [];
+      for (let i = 0; i < 150; i++) {
+        parts.push({
+          x: r0.width * (0.1 + Math.random() * 0.8),
+          y: r0.height + 10,
+          vx: (Math.random() - 0.5) * 7,
+          vy: -(7 + Math.random() * 8),
+          g: 0.22 + Math.random() * 0.08,
+          s: 4 + Math.random() * 5,
+          rot: Math.random() * 6.28,
+          vr: (Math.random() - 0.5) * 0.35,
+          c: colors[(Math.random() * colors.length) | 0],
+          life: 0, max: 95 + Math.random() * 45
+        });
+      }
+      function tick() {
+        const r = rect();
+        ctx.clearRect(0, 0, r.width, r.height);
+        let alive = false;
+        for (const p of parts) {
+          if (p.life > p.max) continue;
+          p.life++; p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          if (p.y < r.height + 50) alive = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, 1 - p.life / p.max);
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+          ctx.restore();
+        }
+        if (alive) requestAnimationFrame(tick);
+        else { ctx.clearRect(0, 0, r.width, r.height); canvas.remove(); }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      try {
+        const data = await loadSheetData(SHEET_URL);
+        root.innerHTML = renderCard(data);
+        if (GOALS_MET) requestAnimationFrame(fireCelebration);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

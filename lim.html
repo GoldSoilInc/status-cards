@@ -54,11 +54,15 @@
       }
     }
 
+    // Set true by renderCard when the qualified target is hit; gates the confetti.
+    let GOALS_MET = false;
+
     function renderCard(data) {
       const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan']);
 
       const qualified = num(data, 'qualified_total');
       const target = num(data, 'qualified_target', 30);
+      GOALS_MET = qualified >= target;
       const sourced = num(data, 'sourced_total');
       const phoneQ = num(data, 'phone_q');
       const textQ = num(data, 'text_q');
@@ -157,7 +161,6 @@
           </div>
         ` : ''}
 
-        ${renderFlagsWithInput(val(data, 'flags', ''))}
         ${renderFooter()}
       `);
     }
@@ -199,6 +202,62 @@
       return counties;
     }
 
+    // Self-contained confetti (GoldSoil colors), drawn on a canvas over the card,
+    // then removed when it finishes. Live-page only — a Slack screenshot won't catch it.
+    function fireCelebration() {
+      const card = document.querySelector('.card');
+      if (!card) return;
+      const prev = card.querySelector('#gs-confetti');
+      if (prev) prev.remove();
+      card.style.position = 'relative';
+      const canvas = document.createElement('canvas');
+      canvas.id = 'gs-confetti';
+      canvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:50;';
+      card.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#C4A22F', '#1A472A', '#e0c66a', '#8a9a8e'];
+      const rect = () => card.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const r0 = rect();
+      canvas.width = Math.max(1, Math.floor(r0.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r0.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const parts = [];
+      for (let i = 0; i < 150; i++) {
+        parts.push({
+          x: r0.width * (0.1 + Math.random() * 0.8),
+          y: r0.height + 10,
+          vx: (Math.random() - 0.5) * 7,
+          vy: -(7 + Math.random() * 8),
+          g: 0.22 + Math.random() * 0.08,
+          s: 4 + Math.random() * 5,
+          rot: Math.random() * 6.28,
+          vr: (Math.random() - 0.5) * 0.35,
+          c: colors[(Math.random() * colors.length) | 0],
+          life: 0, max: 95 + Math.random() * 45
+        });
+      }
+      function tick() {
+        const r = rect();
+        ctx.clearRect(0, 0, r.width, r.height);
+        let alive = false;
+        for (const p of parts) {
+          if (p.life > p.max) continue;
+          p.life++; p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          if (p.y < r.height + 50) alive = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, 1 - p.life / p.max);
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+          ctx.restore();
+        }
+        if (alive) requestAnimationFrame(tick);
+        else { ctx.clearRect(0, 0, r.width, r.height); canvas.remove(); }
+      }
+      requestAnimationFrame(tick);
+    }
+
     async function init() {
       const root = document.getElementById('root');
       root.innerHTML = renderLoading();
@@ -213,6 +272,7 @@
       try {
         const data = await loadSheetData(SHEET_URL);
         root.innerHTML = renderCard(data);
+        if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {
         root.innerHTML = renderError(err.message);
       }

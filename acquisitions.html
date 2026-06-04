@@ -15,7 +15,7 @@
     // LAND ACQUISITIONS CARD
     // ============================================
     // NOTE: swap the gid below for the published acq_metrics tab's gid once it's live.
-    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1701121144&single=true&output=csv";
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=ACQ_GID_HERE&single=true&output=csv";
 
     const TEAM_NAME = "Land Acquisitions";
     const TEAM_LEAD = "Anshul";
@@ -29,9 +29,16 @@
       const pending      = num(data, 'pending');
       const dealsSigned  = num(data, 'deals_signed');          // signed TODAY
       const dealSpread   = val(data, 'deal_spread_signed', '$0'); // $ spread of today's signed
+      const spreadWeek   = num(data, 'deal_spread_week', 0);      // week-to-date signed spread
+      const spreadTarget = num(data, 'deal_spread_target', 125000); // weekly target
 
       // A signed deal today = the acquisition win → fire confetti.
       GOALS_MET = dealsSigned >= 1;
+
+      // Weekly deal-spread pill: gold while below the $125k/wk target, cream + check when hit.
+      const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
+      const spreadMet = spreadWeek >= spreadTarget;
+      const spreadPill = `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${spreadMet ? 'var(--gs-cream)' : 'var(--gs-gold)'}; color:var(--gs-dark-green); font-size:9px; font-weight:bold; letter-spacing:0.5px;">${spreadMet ? '\u2713 ' : ''}WK ${fmtUSD(spreadWeek)} / ${fmtUSD(spreadTarget)}</div>`;
 
       // By Closer rows: "Closer · Accepted · Pending · Signed · Spread"
       const closers = parseList(data['closer_rows'], 5);
@@ -43,7 +50,7 @@
         <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${accepted}</div>
-            <div class="kpi-label">Accepted</div>
+            <div class="kpi-label">Accepted Today</div>
           </div>
           <div class="kpi-cell">
             <div class="kpi-value">${pending}</div>
@@ -56,6 +63,7 @@
           <div class="kpi-cell hero">
             <div class="kpi-value">${dealSpread}</div>
             <div class="kpi-label">Deal Spread Signed</div>
+            ${spreadPill}
           </div>
         </div>
 

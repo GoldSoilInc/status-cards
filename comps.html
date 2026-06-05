@@ -37,6 +37,7 @@
       const processedVal = num(data, 'processed');
       const analyzedVal  = num(data, 'analyzed');
       const offersVal    = num(data, 'offers_prepared');
+      const pendingQueue = num(data, 'pending_queue', 0);
 
       // ---- Daily targets (sheet-overridable; set with Anshul) ----
       const processedTarget = num(data, 'processed_target', 30);
@@ -98,6 +99,14 @@
             <div class="kpi-value">${val(data, 'offer_rate', '0')}%</div>
             <div class="kpi-label">Offer Rate</div>
           </div>
+        </div>
+
+        <div style="margin: 16px 24px 0; background: var(--gs-dark-green); border-radius: 8px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+          <div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 12px; letter-spacing: 2px; color: var(--gs-gold);">PENDING IN QUEUE</div>
+            <div style="font-family: var(--font-body); font-size: 10px; color: var(--gs-cream); opacity: 0.85; margin-top: 3px;">Still to be processed \u00b7 at 5 PM this carries to tomorrow</div>
+          </div>
+          <div style="font-family: var(--font-display); font-weight: bold; font-size: 52px; color: var(--gs-cream); line-height: 1;">${pendingQueue}</div>
         </div>
 
         <div class="section">

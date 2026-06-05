@@ -43,6 +43,12 @@
       // Confetti fires when the team closes a deal today (UC w/ EMD hits target).
       GOALS_MET = ucWEmd >= T.uc_w_emd;
 
+      // Monthly $ target + month-to-date achieved (sheet-overridable; fallbacks set with Anshul).
+      const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
+      const mtdAchieved = num(data, 'mtd_achieved', 15520);
+      const targetMonth = num(data, 'sales_target_month', 557870);
+      const mtdPct = targetMonth > 0 ? Math.round((mtdAchieved / targetMonth) * 100) : 0;
+
       // No agreed Sales targets yet (per Anshul) — show TBD instead of a goal number.
       const goalPill = () =>
         `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:9px; font-weight:bold; letter-spacing:0.5px;">TBD</div>`;
@@ -67,14 +73,15 @@
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div style="margin: 4px 24px 0; background: var(--gs-dark-green); border-radius: 8px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+        <div style="margin: 4px 24px 16px; background: var(--gs-dark-green); border-radius: 8px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
           <div>
             <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 2px; color: var(--gs-gold);">MONTH TO DATE</div>
-            <div style="font-family: var(--font-display); font-weight: bold; font-size: 40px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">${val(data, 'mtd_achieved', '\u2014')}</div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 40px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">${fmtUSD(mtdAchieved)}</div>
+            <div style="font-family: var(--font-display); font-size: 12px; color: var(--gs-gold); margin-top: 4px; font-weight: bold;">${mtdPct}% of target</div>
           </div>
           <div style="text-align: right;">
             <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 2px; color: var(--gs-gold);">MONTHLY TARGET</div>
-            <div style="font-family: var(--font-display); font-weight: bold; font-size: 28px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">TBD</div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 28px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">${fmtUSD(targetMonth)}</div>
           </div>
         </div>
 

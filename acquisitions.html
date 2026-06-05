@@ -18,7 +18,7 @@
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1701121144&single=true&output=csv";
 
     const TEAM_NAME = "Land Acquisitions";
-    const TEAM_LEAD = "Anshul";
+    const TEAM_LEAD = "Sol / Mariam";
 
     // Set true by renderCard when a deal is signed today; gates the confetti.
     let GOALS_MET = false;
@@ -31,6 +31,8 @@
       const dealSpread   = val(data, 'deal_spread_signed', '$0'); // $ spread of today's signed
       const spreadWeek   = num(data, 'deal_spread_week', 0);      // week-to-date signed spread
       const spreadTarget = num(data, 'deal_spread_target', 125000); // weekly target
+      const spreadMonth  = num(data, 'deal_spread_month', 0);        // month-to-date signed spread
+      const spreadTargetMonth = num(data, 'deal_spread_target_month', 500000); // monthly target
 
       // A signed deal today = the acquisition win → fire confetti.
       GOALS_MET = dealsSigned >= 1;
@@ -47,6 +49,19 @@
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
+        <div style="margin: 4px 24px 0; background: var(--gs-dark-green); border-radius: 8px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+          <div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 2px; color: var(--gs-gold);">MONTH TO DATE \u00b7 DEAL SPREAD SIGNED</div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 42px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">${fmtUSD(spreadMonth)}</div>
+            <div style="font-family: var(--font-display); font-size: 12px; color: var(--gs-gold); margin-top: 4px; font-weight: bold;">TARGET ${fmtUSD(spreadTargetMonth)} \u00b7 ${spreadTargetMonth > 0 ? Math.round((spreadMonth / spreadTargetMonth) * 100) : 0}%</div>
+          </div>
+          <div style="flex: 1; max-width: 280px;">
+            <div style="background: rgba(245,240,225,0.18); border-radius: 6px; height: 18px; overflow: hidden;">
+              <div style="height: 100%; width: ${Math.min(100, spreadTargetMonth > 0 ? (spreadMonth / spreadTargetMonth) * 100 : 0)}%; background: var(--gs-gold);"></div>
+            </div>
+          </div>
+        </div>
+
         <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${accepted}</div>
@@ -54,7 +69,7 @@
           </div>
           <div class="kpi-cell">
             <div class="kpi-value">${pending}</div>
-            <div class="kpi-label">Pending</div>
+            <div class="kpi-label">Pending in Queue</div>
           </div>
           <div class="kpi-cell accent">
             <div class="kpi-value">${dealsSigned}</div>

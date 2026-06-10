@@ -52,8 +52,10 @@
       const processRate  = rateKnown ? Math.round((processedVal / limQualified) * 100) : 0;
       const rateDisplay  = Math.min(processRate, 100);
 
-      // Confetti only at the 100% "Hallelujah" tier.
-      GOALS_MET = rateKnown && processRate >= 100;
+      // Confetti fires only when all three daily targets are met (Processed 30, Analyzed 30, Offers 15).
+      GOALS_MET = processedVal >= processedTarget
+        && analyzedVal >= analyzedTarget
+        && offersVal >= offersTarget;
 
       // Count goal pill (gold -> green when target met)
       const goalPill = (value, target) => {
@@ -233,7 +235,7 @@
       root.innerHTML = renderLoading();
 
       try {
-        const data = await loadSheetData(SHEET_URL);
+        const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());
         root.innerHTML = renderCard(data);
         if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {

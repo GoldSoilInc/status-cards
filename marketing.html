@@ -28,9 +28,9 @@
     function renderCard(data) {
       const cards = parseCampaigns(data);
       const people = parsePeople(data, ['ellyse', 'shiela']);
-      // Ellyse channel work: "Channel · Listing" per line. Sheila MLS work: "Listing · Pictures by" per line.
-      const ellyseChannels = parseLines(data['ellyse_channels'], 2);
-      const sheilaMls       = parseLines(data['sheila_mls'], 2);
+      // Work split: "Listing # · Tasks" per line, one row per listing (tasks combined).
+      const ellyseWork = parseLines(data['ellyse_work'], 2);
+      const sheilaWork = parseLines(data['sheila_work'], 2);
 
       // ---- KPI values (today) ----
       const campaignsVal  = num(data, 'campaigns_launched');
@@ -129,26 +129,26 @@
           <h2>WORK SPLIT \u00b7 TODAY</h2>
           <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
             <div>
-              <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; color: var(--gs-gold); padding-bottom: 6px; border-bottom: 1px solid var(--gs-gold); margin-bottom: 8px;">ELLYSE \u00b7 CHANNELS</div>
-              ${ellyseChannels.length > 0 ? `
+              <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; color: var(--gs-gold); padding-bottom: 6px; border-bottom: 1px solid var(--gs-gold); margin-bottom: 8px;">ELLYSE</div>
+              ${ellyseWork.length > 0 ? `
                 <table>
-                  <thead><tr><th>CHANNEL</th><th>LISTING</th></tr></thead>
+                  <thead><tr><th>LISTING #</th><th>TASKS</th></tr></thead>
                   <tbody>
-                    ${ellyseChannels.map(r => `<tr><td class="label">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+                    ${ellyseWork.map(r => `<tr><td class="label">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
                   </tbody>
                 </table>
-              ` : `<div class="empty-state">No channel work logged yet today.</div>`}
+              ` : `<div class="empty-state">No listing work logged yet today.</div>`}
             </div>
             <div>
-              <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; color: var(--gs-gold); padding-bottom: 6px; border-bottom: 1px solid var(--gs-gold); margin-bottom: 8px;">SHEILA \u00b7 MLS</div>
-              ${sheilaMls.length > 0 ? `
+              <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 1.5px; color: var(--gs-gold); padding-bottom: 6px; border-bottom: 1px solid var(--gs-gold); margin-bottom: 8px;">SHEILA</div>
+              ${sheilaWork.length > 0 ? `
                 <table>
-                  <thead><tr><th>LISTING</th><th>PICTURES</th></tr></thead>
+                  <thead><tr><th>LISTING #</th><th>TASKS</th></tr></thead>
                   <tbody>
-                    ${sheilaMls.map(r => `<tr><td class="label">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
+                    ${sheilaWork.map(r => `<tr><td class="label">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}
                   </tbody>
                 </table>
-              ` : `<div class="empty-state">No MLS work logged yet today.</div>`}
+              ` : `<div class="empty-state">No listing work logged yet today.</div>`}
             </div>
           </div>
         </div>
@@ -298,7 +298,7 @@
       }
 
       try {
-        const data = await loadSheetData(SHEET_URL);
+        const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());
         root.innerHTML = renderCard(data);
         if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {

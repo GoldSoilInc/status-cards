@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LIM Outreach — GoldSoil Status</title>
+  <title>Land Intake — GoldSoil Status</title>
   <link rel="stylesheet" href="shared/brand.css">
   <script src="shared/sheet-loader.js"></script>
 </head>
@@ -12,19 +12,21 @@
 
   <script>
     // ============================================
-    // LIM OUTREACH TEAM CARD
+    // LAND INTAKE (LIM) TEAM CARD
+    // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
+    // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
     // ============================================
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
     const TEAM_NAME = "Land Intake Team";
     const TEAM_LEAD = "Juan";
 
-    // Render flags section with editable textbox
+    // Render flags section with editable textbox (EDIT -> textarea -> SAVE).
     function renderFlagsWithInput(defaultText) {
       const text = defaultText && defaultText.trim() ? defaultText : 'None right now.';
       return `
         <div class="flags" style="position: relative;">
-          <div class="flag-label">⚑ FLAGS / NEEDS ANSHUL</div>
+          <div class="flag-label">\u2691 FLAGS / NEEDS ANSHUL</div>
           <div class="flag-body" id="flag-display">${text}</div>
           <textarea id="flag-input" placeholder="Click here to edit flags before screenshotting..."
             style="display: none; width: 100%; min-height: 60px; font-family: var(--font-body); font-size: 12px; color: var(--gs-text); line-height: 1.5; border: 1px solid var(--gs-gold); border-radius: 4px; padding: 8px; resize: vertical; box-sizing: border-box;"></textarea>
@@ -34,7 +36,6 @@
       `;
     }
 
-    // Toggle between display and edit mode for flags
     function toggleFlagEdit() {
       const display = document.getElementById('flag-display');
       const input = document.getElementById('flag-input');
@@ -54,64 +55,54 @@
       }
     }
 
-    // Set true by renderCard when the qualified target is hit; gates the confetti.
+    // Set true by renderCard when the Appts target is hit; gates the confetti.
     let GOALS_MET = false;
 
     function renderCard(data) {
-      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan']);
+      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan', 'nada']);
 
-      const qualified = num(data, 'qualified_total');
-      const target = num(data, 'qualified_target', 30);
-      GOALS_MET = qualified >= target;
-      const sourced = num(data, 'sourced_total');
-      const phoneQ = num(data, 'phone_q');
-      const textQ = num(data, 'text_q');
-      const qualifyRate = sourced > 0 ? ((qualified / sourced) * 100).toFixed(1) : '0.0';
-      const phonePct = qualified > 0 ? Math.round((phoneQ / qualified) * 100) : 0;
-      const textPct = qualified > 0 ? Math.round((textQ / qualified) * 100) : 0;
+      // ---- KPI values (today) ----
+      const warmTransfers = num(data, 'warm_transfers');
+      const apptsSet      = num(data, 'appts');
+      const showUpRate    = val(data, 'show_up_rate', '0');
 
-      // Hero block: progress vs target
-      const isEOD = getCurrentTimeSlot() === '5pm';
-      const overUnder = qualified - target;
-      const pctToTarget = target > 0 ? Math.round((qualified / target) * 100) : 0;
-      let badgeText;
-      if (isEOD) {
-        badgeText = overUnder >= 0 ? `✓ TARGET +${overUnder}` : `${overUnder} SHORT`;
-      } else {
-        badgeText = `${pctToTarget}% TO TARGET`;
-      }
+      // ---- Targets (sheet-overridable; blank = TBD pill, no invented numbers) ----
+      // Confetti fires only if appts_target is set AND met.
+      const apptsTargetRaw = val(data, 'appts_target', '');
+      const apptsTarget = (apptsTargetRaw !== '' && !isNaN(Number(apptsTargetRaw))) ? Number(apptsTargetRaw) : null;
+      GOALS_MET = apptsTarget !== null && apptsSet >= apptsTarget;
 
-      const topCounties = parseTopCounties(data);
+      // Goal pill: gold while below, green when met, cream "TBD" until a target exists.
+      const goalPill = (value, targetKey, isPct) => {
+        const raw = val(data, targetKey, '');
+        if (raw === '' || isNaN(Number(raw))) {
+          return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:9px; font-weight:bold; letter-spacing:0.5px;">TBD</div>`;
+        }
+        const target = Number(raw);
+        const met = Number(value) >= target;
+        const label = isPct ? `GOAL ${target}%` : `GOAL ${target}`;
+        return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${label}</div>`;
+      };
 
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: 1.4fr 1fr 1fr;">
-          <div class="hero-block">
-            <div class="label">Qualified vs Target</div>
-            <div class="value-row">
-              <div class="value-big">${qualified}</div>
-              <div class="value-target">/ ${target}</div>
-            </div>
-            <div class="badge">${badgeText}</div>
-          </div>
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
           <div class="kpi-cell">
-            <div class="kpi-value">${sourced}</div>
-            <div class="kpi-label">Sourced</div>
+            <div class="kpi-value">${warmTransfers}</div>
+            <div class="kpi-label">Warm Transfers</div>
+            ${goalPill(warmTransfers, 'warm_transfers_target', false)}
           </div>
           <div class="kpi-cell accent">
-            <div class="kpi-value">${qualifyRate}%</div>
-            <div class="kpi-label">Qualify Rate</div>
+            <div class="kpi-value">${apptsSet}</div>
+            <div class="kpi-label">Appts Set</div>
+            ${goalPill(apptsSet, 'appts_target', false)}
           </div>
-        </div>
-
-        <div style="padding: 14px 24px 0; display: flex; gap: 16px; align-items: center;">
-          <div style="font-family: var(--font-display); font-weight: bold; font-size: 12px; color: var(--gs-gold); letter-spacing: 1.5px;">CHANNEL</div>
-          <div class="inline-stat">
-            📞 Phone Q: <span class="label-bold">${phoneQ}</span> <span style="color: var(--gs-faint);">(${phonePct}%)</span>
-            &nbsp;·&nbsp;
-            💬 Text Q: <span class="label-bold">${textQ}</span> <span style="color: var(--gs-faint);">(${textPct}%)</span>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${showUpRate}%</div>
+            <div class="kpi-label">Show-Up Rate</div>
+            ${goalPill(showUpRate, 'show_up_rate_target', true)}
           </div>
         </div>
 
@@ -121,85 +112,51 @@
             <thead>
               <tr>
                 <th>AGENT</th>
-                <th class="num">SOURCED</th>
-                <th class="num">PHONE Q</th>
-                <th class="num">TEXT Q</th>
-                <th class="num">TOTAL Q</th>
-                <th class="num">RATE</th>
+                <th class="num">WARM TRANSFERS</th>
+                <th class="num">APPTS</th>
+                <th class="num">SHOW-UP</th>
               </tr>
             </thead>
             <tbody>
               ${agents.map(a => `
                 <tr>
                   <td class="label">${a.name}</td>
-                  <td class="num">${a.sourced}</td>
-                  <td class="num">${a.phone_q}</td>
-                  <td class="num">${a.text_q}</td>
-                  <td class="num highlight">${a.total_q}</td>
-                  <td class="num gold">${a.rate}</td>
+                  <td class="num">${a.warm_transfers}</td>
+                  <td class="num highlight">${a.appts}</td>
+                  <td class="num gold">${a.show_up_rate}%</td>
                 </tr>
               `).join('')}
               <tr class="total">
                 <td>TOTAL</td>
-                <td class="num">${sourced}</td>
-                <td class="num">${phoneQ}</td>
-                <td class="num">${textQ}</td>
-                <td class="num">${qualified}</td>
-                <td class="num">${qualifyRate}%</td>
+                <td class="num">${warmTransfers}</td>
+                <td class="num">${apptsSet}</td>
+                <td class="num">${showUpRate}%</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        ${topCounties.length > 0 ? `
-          <div class="section">
-            <h2>TOP COUNTIES</h2>
-            <div class="inline-stat">
-              ${topCounties.map(c => `<span class="label-bold">${c.name}</span> ${c.count}`).join(' &nbsp;·&nbsp; ')}
-              ${data.counties_other_count ? `<span style="color: var(--gs-faint);"> &nbsp;+ ${data.counties_other_count} counties producing 1-2 each</span>` : ''}
-            </div>
-          </div>
-        ` : ''}
-
+        ${renderFlagsWithInput(val(data, 'flags', ''))}
         ${renderFooter()}
       `);
     }
 
+    // Per-agent counts keyed off the Sourcer (Phone) column in each new tab.
+    // Full names must match the value in that column exactly for COUNTIF to land.
     function parseAgents(data, names) {
       const fullNames = {
         martina: 'Martina Misheal',
         maryam: 'Maryam Selim',
         ahmed: 'Ahmed Abdelbaset',
-        juan: 'Juan Pablo Larrea'
+        juan: 'Juan Pablo Larrea',
+        nada: 'Nada Ahmed'
       };
-      return names.map(n => {
-        const sourced = num(data, `${n}_sourced`);
-        const phone = num(data, `${n}_phone_q`);
-        const text = num(data, `${n}_text_q`);
-        const total = phone + text;
-        const rate = sourced > 0 ? ((total / sourced) * 100).toFixed(1) + '%' : '—';
-        return {
-          name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
-          sourced,
-          phone_q: phone,
-          text_q: text,
-          total_q: total,
-          rate
-        };
-      });
-    }
-
-    function parseTopCounties(data) {
-      const counties = [];
-      for (let i = 1; i <= 5; i++) {
-        const name = data[`county_${i}_name`];
-        if (!name) continue;
-        counties.push({
-          name,
-          count: val(data, `county_${i}_count`, '0')
-        });
-      }
-      return counties;
+      return names.map(n => ({
+        name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
+        warm_transfers: num(data, `${n}_warm_transfers`),
+        appts: num(data, `${n}_appts`),
+        show_up_rate: val(data, `${n}_show_up_rate`, '0')
+      }));
     }
 
     // Self-contained confetti (GoldSoil colors), drawn on a canvas over the card,
@@ -261,13 +218,6 @@
     async function init() {
       const root = document.getElementById('root');
       root.innerHTML = renderLoading();
-
-      if (SHEET_URL === "PASTE_LIM_CSV_URL_HERE") {
-        root.innerHTML = renderError(
-          "Sheet URL not yet configured. Open lim.html and paste your published CSV URL into SHEET_URL."
-        );
-        return;
-      }
 
       try {
         const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());

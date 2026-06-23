@@ -45,6 +45,13 @@
       // By Closer rows: "Closer · Accepted · Pending · Signed · Spread"
       const closers = parseList(data['closer_rows'], 5);
 
+      // ---- LAM funnel (top-of-funnel, today) ----
+      const apptSet      = num(data, 'appt_set');
+      const preQualified = num(data, 'pre_qualified');
+      const showUpRate   = val(data, 'show_up_rate', '0');
+      const warmAccepted = num(data, 'warm_accepted');
+      const qualifiers   = parseQualifiers(data, ['mariam', 'saul']);
+
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
@@ -82,6 +89,57 @@
           </div>
         </div>
 
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${apptSet}</div>
+            <div class="kpi-label">Appts Set</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${showUpRate}%</div>
+            <div class="kpi-label">Show-Up Rate</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${preQualified}</div>
+            <div class="kpi-label">Pre-Qualified</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>BY QUALIFIER · TODAY</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>QUALIFIER</th>
+                <th class="num">WARM ACCEPTED</th>
+                <th class="num">APPTS SET</th>
+                <th class="num">PRE-QUALIFIED</th>
+                <th class="num">SHOW-UP</th>
+                <th class="num">DEAL SPREAD</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${qualifiers.map(q => `
+                <tr>
+                  <td class="label">${q.name}</td>
+                  <td class="num">${q.warm_accepted}</td>
+                  <td class="num highlight">${q.appt_set}</td>
+                  <td class="num">${q.pre_qualified}</td>
+                  <td class="num gold">${q.show_up_rate}%</td>
+                  <td class="num">${q.deal_spread}</td>
+                </tr>
+              `).join('')}
+              <tr class="total">
+                <td>TOTAL</td>
+                <td class="num">${warmAccepted}</td>
+                <td class="num">${apptSet}</td>
+                <td class="num">${preQualified}</td>
+                <td class="num">${showUpRate}%</td>
+                <td class="num">${dealSpread}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
         <div class="section">
           <h2>BY CLOSER · TODAY</h2>
           ${closers.length > 0 ? `
@@ -112,6 +170,19 @@
 
         ${renderFooter()}
       `);
+    }
+
+    // Per-qualifier funnel counts, keyed off the Qualifier column (A) in each LAM tab.
+    function parseQualifiers(data, names) {
+      const fullNames = { mariam: 'Mariam', saul: 'Saul' };
+      return names.map(n => ({
+        name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
+        warm_accepted: num(data, `${n}_warm_accepted`),
+        appt_set: num(data, `${n}_appt_set`),
+        pre_qualified: num(data, `${n}_pre_qualified`),
+        show_up_rate: val(data, `${n}_show_up_rate`, '0'),
+        deal_spread: val(data, `${n}_deal_spread`, '$0')
+      }));
     }
 
     // Parse a multi-line " · " separated list into an array of N-element arrays.
@@ -188,7 +259,7 @@
       root.innerHTML = renderLoading();
 
       try {
-        const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());
+        const data = await loadSheetData(SHEET_URL);
         root.innerHTML = renderCard(data);
         if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {

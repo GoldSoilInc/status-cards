@@ -45,7 +45,7 @@
 
       // Monthly $ target + month-to-date achieved (sheet-overridable; fallbacks set with Anshul).
       const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
-      const mtdAchieved = num(data, 'mtd_achieved', 15520);
+      const mtdAchieved = num(data, 'mtd_achieved', 0);
       const targetMonth = num(data, 'sales_target_month', 557870);
       const mtdPct = targetMonth > 0 ? Math.round((mtdAchieved / targetMonth) * 100) : 0;
 

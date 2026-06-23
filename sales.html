@@ -243,7 +243,7 @@
       root.innerHTML = renderLoading();
 
       try {
-        const data = await loadSheetData(SHEET_URL);
+        const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());
         root.innerHTML = renderCard(data);
         if (GOALS_MET) requestAnimationFrame(fireCelebration);
       } catch (err) {

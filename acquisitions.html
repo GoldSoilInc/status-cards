@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Land Acquisitions — GoldSoil Status</title>
+  <link rel="stylesheet" href="shared/brand.css">
+  <script src="shared/sheet-loader.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script>
+    // ============================================
+    // LAND ACQUISITIONS CARD
+    // ============================================
+    // NOTE: swap the gid below for the published acq_metrics tab's gid once it's live.
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1701121144&single=true&output=csv";
+
+    const TEAM_NAME = "Land Acquisitions";
+    const TEAM_LEAD = "Sol / Mariam";
+
+    // Set true by renderCard when a deal is signed today; gates the confetti.
+    let GOALS_MET = false;
+
+    function renderCard(data) {
+      // ---- KPI values ----
+      const pending      = num(data, 'pending');
+      const dealsSigned  = num(data, 'deals_signed');          // signed TODAY
+      const dealSpread   = val(data, 'deal_spread_signed', '$0'); // $ spread of today's signed
+      const spreadWeek   = num(data, 'deal_spread_week', 0);      // week-to-date signed spread
+      const spreadTarget = num(data, 'deal_spread_target', 125000); // weekly target
+      const spreadMonth  = num(data, 'deal_spread_month', spreadWeek);  // month-to-date signed spread (falls back to week)
+      const spreadTargetMonth = num(data, 'deal_spread_target_month', 500000); // monthly target
+
+      // A signed deal today = the acquisition win → fire confetti.
+      GOALS_MET = dealsSigned >= 1;
+
+      // Weekly deal-spread pill: gold while below the $125k/wk target, cream + check when hit.
+      const fmtUSD = (n) => '$' + Math.round(n).toLocaleString('en-US');
+      const spreadMet = spreadWeek >= spreadTarget;
+      const spreadPill = `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${spreadMet ? 'var(--gs-cream)' : 'var(--gs-gold)'}; color:var(--gs-dark-green); font-size:9px; font-weight:bold; letter-spacing:0.5px;">${spreadMet ? '\u2713 ' : ''}WK ${fmtUSD(spreadWeek)} / ${fmtUSD(spreadTarget)}</div>`;
+
+      // ---- LAM funnel (top-of-funnel, today) ----
+      const apptSet      = num(data, 'appt_set');
+      const preQualified = num(data, 'pre_qualified');
+      const showUpRate   = val(data, 'show_up_rate', '0');
+      const warmAccepted = num(data, 'warm_accepted');
+      const qualifiers   = parseQualifiers(data, ['mariam', 'saul']);
+
+      return wrapCard(`
+        ${renderHeader(TEAM_NAME, TEAM_LEAD)}
+        ${renderTimeStrip(getCurrentTimeSlot())}
+
+        <div style="margin: 4px 24px 16px; background: var(--gs-dark-green); border-radius: 8px; padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+          <div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 11px; letter-spacing: 2px; color: var(--gs-gold);">MONTH TO DATE \u00b7 DEAL SPREAD SIGNED</div>
+            <div style="font-family: var(--font-display); font-weight: bold; font-size: 42px; color: var(--gs-cream); line-height: 1.05; margin-top: 4px;">${fmtUSD(spreadMonth)}</div>
+            <div style="font-family: var(--font-display); font-size: 12px; color: var(--gs-gold); margin-top: 4px; font-weight: bold;">TARGET ${fmtUSD(spreadTargetMonth)} \u00b7 ${spreadTargetMonth > 0 ? Math.round((spreadMonth / spreadTargetMonth) * 100) : 0}%</div>
+          </div>
+          <div style="flex: 1; max-width: 280px;">
+            <div style="background: rgba(245,240,225,0.18); border-radius: 6px; height: 18px; overflow: hidden;">
+              <div style="height: 100%; width: ${Math.min(100, spreadTargetMonth > 0 ? (spreadMonth / spreadTargetMonth) * 100 : 0)}%; background: var(--gs-gold);"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${pending}</div>
+            <div class="kpi-label">Pending in Queue</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${dealsSigned}</div>
+            <div class="kpi-label">Deals Signed Today</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${dealSpread}</div>
+            <div class="kpi-label">Deal Spread Signed</div>
+            ${spreadPill}
+          </div>
+        </div>
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${apptSet}</div>
+            <div class="kpi-label">Appts Set</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${showUpRate}%</div>
+            <div class="kpi-label">Show-Up Rate</div>
+          </div>
+          <div class="kpi-cell accent">
+            <div class="kpi-value">${preQualified}</div>
+            <div class="kpi-label">Pre-Qualified</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h2>BY QUALIFIER · TODAY</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>QUALIFIER</th>
+                <th class="num">WARM ACCEPTED</th>
+                <th class="num">APPTS SET</th>
+                <th class="num">PRE-QUALIFIED</th>
+                <th class="num">SHOW-UP</th>
+                <th class="num">DEAL SPREAD</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${qualifiers.map(q => `
+                <tr>
+                  <td class="label">${q.name}</td>
+                  <td class="num">${q.warm_accepted}</td>
+                  <td class="num highlight">${q.appt_set}</td>
+                  <td class="num">${q.pre_qualified}</td>
+                  <td class="num gold">${q.show_up_rate}%</td>
+                  <td class="num">${q.deal_spread}</td>
+                </tr>
+              `).join('')}
+              <tr class="total">
+                <td>TOTAL</td>
+                <td class="num">${warmAccepted}</td>
+                <td class="num">${apptSet}</td>
+                <td class="num">${preQualified}</td>
+                <td class="num">${showUpRate}%</td>
+                <td class="num">${dealSpread}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        ${renderFooter()}
+      `);
+    }
+
+    // Per-qualifier funnel counts, keyed off the Qualifier column (A) in each LAM tab.
+    function parseQualifiers(data, names) {
+      const fullNames = { mariam: 'Mariam', saul: 'Saul' };
+      return names.map(n => ({
+        name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
+        warm_accepted: num(data, `${n}_warm_accepted`),
+        appt_set: num(data, `${n}_appt_set`),
+        pre_qualified: num(data, `${n}_pre_qualified`),
+        show_up_rate: val(data, `${n}_show_up_rate`, '0'),
+        deal_spread: val(data, `${n}_deal_spread`, '$0')
+      }));
+    }
+
+    // Self-contained confetti (GoldSoil colors), drawn on a canvas over the card,
+    // removed when finished. Live-page only — a Slack screenshot won't catch it.
+    function fireCelebration() {
+      const card = document.querySelector('.card');
+      if (!card) return;
+      const prev = card.querySelector('#gs-confetti');
+      if (prev) prev.remove();
+      card.style.position = 'relative';
+      const canvas = document.createElement('canvas');
+      canvas.id = 'gs-confetti';
+      canvas.style.cssText = 'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:50;';
+      card.appendChild(canvas);
+      const ctx = canvas.getContext('2d');
+      const colors = ['#C4A22F', '#1A472A', '#e0c66a', '#8a9a8e'];
+      const rect = () => card.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const r0 = rect();
+      canvas.width = Math.max(1, Math.floor(r0.width * dpr));
+      canvas.height = Math.max(1, Math.floor(r0.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const parts = [];
+      for (let i = 0; i < 150; i++) {
+        parts.push({
+          x: r0.width * (0.1 + Math.random() * 0.8),
+          y: r0.height + 10,
+          vx: (Math.random() - 0.5) * 7,
+          vy: -(7 + Math.random() * 8),
+          g: 0.22 + Math.random() * 0.08,
+          s: 4 + Math.random() * 5,
+          rot: Math.random() * 6.28,
+          vr: (Math.random() - 0.5) * 0.35,
+          c: colors[(Math.random() * colors.length) | 0],
+          life: 0, max: 95 + Math.random() * 45
+        });
+      }
+      function tick() {
+        const r = rect();
+        ctx.clearRect(0, 0, r.width, r.height);
+        let alive = false;
+        for (const p of parts) {
+          if (p.life > p.max) continue;
+          p.life++; p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+          if (p.y < r.height + 50) alive = true;
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, 1 - p.life / p.max);
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.c;
+          ctx.fillRect(-p.s / 2, -p.s / 2, p.s, p.s * 0.6);
+          ctx.restore();
+        }
+        if (alive) requestAnimationFrame(tick);
+        else { ctx.clearRect(0, 0, r.width, r.height); canvas.remove(); }
+      }
+      requestAnimationFrame(tick);
+    }
+
+    async function init() {
+      const root = document.getElementById('root');
+      root.innerHTML = renderLoading();
+
+      try {
+        const data = await loadSheetData(SHEET_URL + "&cb=" + Date.now());
+        root.innerHTML = renderCard(data);
+        if (GOALS_MET) requestAnimationFrame(fireCelebration);
+      } catch (err) {
+        root.innerHTML = renderError(err.message);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

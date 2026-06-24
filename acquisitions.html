@@ -25,7 +25,6 @@
 
     function renderCard(data) {
       // ---- KPI values ----
-      const pending      = num(data, 'pending');
       const dealsSigned  = num(data, 'deals_signed');          // signed TODAY
       const dealSpread   = val(data, 'deal_spread_signed', '$0'); // $ spread of today's signed
       const spreadWeek   = num(data, 'deal_spread_week', 0);      // week-to-date signed spread
@@ -67,32 +66,32 @@
 
         <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
           <div class="kpi-cell">
-            <div class="kpi-value">${pending}</div>
-            <div class="kpi-label">Pending in Queue</div>
+            <div class="kpi-value">${warmAccepted}</div>
+            <div class="kpi-label">Warm Transfers Accepted</div>
           </div>
           <div class="kpi-cell accent">
-            <div class="kpi-value">${dealsSigned}</div>
-            <div class="kpi-label">Deals Signed Today</div>
+            <div class="kpi-value">${preQualified}</div>
+            <div class="kpi-label">Pre-Qualified</div>
           </div>
-          <div class="kpi-cell hero">
-            <div class="kpi-value">${dealSpread}</div>
-            <div class="kpi-label">Deal Spread Signed</div>
-            ${spreadPill}
-          </div>
-        </div>
-
-        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${apptSet}</div>
             <div class="kpi-label">Appts Set</div>
           </div>
+        </div>
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
           <div class="kpi-cell hero">
             <div class="kpi-value">${showUpRate}%</div>
             <div class="kpi-label">Show-Up Rate</div>
           </div>
           <div class="kpi-cell accent">
-            <div class="kpi-value">${preQualified}</div>
-            <div class="kpi-label">Pre-Qualified</div>
+            <div class="kpi-value">${dealsSigned}</div>
+            <div class="kpi-label">Deals Signed</div>
+          </div>
+          <div class="kpi-cell hero">
+            <div class="kpi-value">${dealSpread}</div>
+            <div class="kpi-label">Deal Spread</div>
+            ${spreadPill}
           </div>
         </div>
 

@@ -28,6 +28,7 @@
       const dealsSigned  = num(data, 'deals_signed');          // signed TODAY
       const dealSpread   = val(data, 'deal_spread_signed', '$0'); // $ spread of today's signed
       const spreadWeek   = num(data, 'deal_spread_week', 0);      // week-to-date signed spread
+      const spreadTarget = num(data, 'deal_spread_target', 125000); // weekly target
       const spreadMonth  = num(data, 'deal_spread_month', spreadWeek);  // month-to-date signed spread (falls back to week)
       const spreadTargetMonth = num(data, 'deal_spread_target_month', 500000); // monthly target
 

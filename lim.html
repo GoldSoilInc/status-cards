@@ -16,8 +16,8 @@
     // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
     // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
     // warm_transfers_target = ROUND(SUM('Campaign Members'!D2:D)/600, 0)
-    // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — shown EOD;
-    // "Result at EOD" placeholder before the 5 PM slot.
+    // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — own row below
+    // By Agent; "Result at EOD" placeholder before the 5 PM slot.
     // ============================================
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
@@ -70,14 +70,14 @@
         return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${pct}% OF TARGET</div>`;
       };
 
-      // Traffic-light rate box. Before EOD, shows a "Result at EOD" placeholder so the
-      // box is always present (layout never jumps from 4 to 6). At EOD, shows the
+      // Traffic-light rate box (rendered in its own 2-box row below By Agent).
+      // Before EOD, shows a "Result at EOD" placeholder. At EOD, shows the
       // color-coded value: < yellowMin = red, < greenMin = yellow, else green.
       const RATE_RED = '#B23A3A', RATE_YELLOW = '#C4A22F', RATE_GREEN = '#1A472A';
       const rateBox = (key, label, yellowMin, greenMin) => {
         if (!isEOD) {
           return `<div class="kpi-cell">
-              <div class="kpi-value" style="color:var(--gs-faint); font-size:22px;">\u2014</div>
+              <div class="kpi-value" style="color:var(--gs-faint); font-size:26px;">\u2014</div>
               <div class="kpi-label">${label}</div>
               <div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">RESULT AT EOD</div>
             </div>`;
@@ -97,14 +97,11 @@
           </div>`;
       };
 
-      // Always 6 boxes — rate boxes show "Result at EOD" until the 5 PM update.
-      const heroCols = 6;
-
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(${heroCols}, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${wtTarget !== null ? wtTarget : '\u2014'}</div>
             <div class="kpi-label">Warm Transfer Target</div>
@@ -124,8 +121,6 @@
             <div class="kpi-label">Show-Up Rate</div>
             ${goalPill(showUpRate, 'show_up_rate_target', true)}
           </div>
-          ${rateBox('delivery_rate', 'Delivery Rate', 80, 85)}
-          ${rateBox('reply_rate', 'Reply Rate', 7, 10)}
         </div>
 
         <div class="section">
@@ -156,6 +151,11 @@
               </tr>
             </tbody>
           </table>
+        </div>
+
+        <div class="kpi-strip" style="grid-template-columns: repeat(2, 1fr);">
+          ${rateBox('delivery_rate', 'Delivery Rate', 80, 85)}
+          ${rateBox('reply_rate', 'Reply Rate', 7, 10)}
         </div>
 
         ${renderFooter()}

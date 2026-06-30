@@ -15,6 +15,7 @@
     // LAND INTAKE (LIM) TEAM CARD
     // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
     // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
+    // warm_transfers_target = ROUND(SUM('Campaign Members'!D2:D)/600, 0)
     // ============================================
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
@@ -31,6 +32,11 @@
       const warmTransfers = num(data, 'warm_transfers');
       const apptsSet      = num(data, 'appts');
       const showUpRate    = val(data, 'show_up_rate', '0');
+
+      // ---- Warm transfer target + % attained ----
+      const wtTargetRaw = val(data, 'warm_transfers_target', '');
+      const wtTarget = (wtTargetRaw !== '' && !isNaN(Number(wtTargetRaw))) ? Number(wtTargetRaw) : null;
+      const wtPct = (wtTarget && wtTarget > 0) ? Math.round((warmTransfers / wtTarget) * 100) : null;
 
       // ---- Targets (sheet-overridable; blank = TBD pill, no invented numbers) ----
       // Confetti fires only if appts_target is set AND met.
@@ -50,15 +56,28 @@
         return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${label}</div>`;
       };
 
+      // % attained pill for Warm Transfers: gold while below 100, green when hit, cream TBD if no target.
+      const pctPill = (pct) => {
+        if (pct === null) {
+          return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:9px; font-weight:bold; letter-spacing:0.5px;">TBD</div>`;
+        }
+        const met = pct >= 100;
+        return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${pct}% OF TARGET</div>`;
+      };
+
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(3, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${warmTransfers}</div>
             <div class="kpi-label">Warm Transfers</div>
-            ${goalPill(warmTransfers, 'warm_transfers_target', false)}
+            ${pctPill(wtPct)}
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value">${wtTarget !== null ? wtTarget : '\u2014'}</div>
+            <div class="kpi-label">Warm Transfer Target</div>
           </div>
           <div class="kpi-cell accent">
             <div class="kpi-value">${apptsSet}</div>

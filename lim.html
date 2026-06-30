@@ -16,6 +16,7 @@
     // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
     // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
     // warm_transfers_target = ROUND(SUM('Campaign Members'!D2:D)/600, 0)
+    // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — EOD-only display.
     // ============================================
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
@@ -37,6 +38,9 @@
       const wtTargetRaw = val(data, 'warm_transfers_target', '');
       const wtTarget = (wtTargetRaw !== '' && !isNaN(Number(wtTargetRaw))) ? Number(wtTargetRaw) : null;
       const wtPct = (wtTarget && wtTarget > 0) ? Math.round((warmTransfers / wtTarget) * 100) : null;
+
+      // ---- Delivery / Reply rates (read always, displayed EOD only) ----
+      const isEOD = getCurrentTimeSlot() === '5pm';
 
       // ---- Targets (sheet-overridable; blank = TBD pill, no invented numbers) ----
       // Confetti fires only if appts_target is set AND met.
@@ -65,19 +69,41 @@
         return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${pct}% OF TARGET</div>`;
       };
 
+      // Traffic-light rate box (EOD only). < yellowMin = red, < greenMin = yellow, else green.
+      // Missing/blank shows a neutral dash so a not-yet-synced metric doesn't read as a scary 0%.
+      const RATE_RED = '#B23A3A', RATE_YELLOW = '#C4A22F', RATE_GREEN = '#1A472A';
+      const rateBox = (key, label, yellowMin, greenMin) => {
+        const raw = val(data, key, '');
+        if (raw === '' || isNaN(Number(raw))) {
+          return `<div class="kpi-cell">
+              <div class="kpi-value" style="color:var(--gs-faint);">\u2014</div>
+              <div class="kpi-label">${label}</div>
+            </div>`;
+        }
+        const v = Number(raw);
+        const color = v < yellowMin ? RATE_RED : (v < greenMin ? RATE_YELLOW : RATE_GREEN);
+        return `<div class="kpi-cell">
+            <div class="kpi-value" style="color:${color};">${v}%</div>
+            <div class="kpi-label">${label}</div>
+          </div>`;
+      };
+
+      // 4 boxes normally; 6 at the 5 PM update (Delivery + Reply rates appear).
+      const heroCols = isEOD ? 6 : 4;
+
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(${heroCols}, 1fr);">
+          <div class="kpi-cell">
+            <div class="kpi-value">${wtTarget !== null ? wtTarget : '\u2014'}</div>
+            <div class="kpi-label">Warm Transfer Target</div>
+          </div>
           <div class="kpi-cell">
             <div class="kpi-value">${warmTransfers}</div>
             <div class="kpi-label">Warm Transfers</div>
             ${pctPill(wtPct)}
-          </div>
-          <div class="kpi-cell">
-            <div class="kpi-value">${wtTarget !== null ? wtTarget : '\u2014'}</div>
-            <div class="kpi-label">Warm Transfer Target</div>
           </div>
           <div class="kpi-cell accent">
             <div class="kpi-value">${apptsSet}</div>
@@ -89,6 +115,7 @@
             <div class="kpi-label">Show-Up Rate</div>
             ${goalPill(showUpRate, 'show_up_rate_target', true)}
           </div>
+          ${isEOD ? rateBox('delivery_rate', 'Delivery Rate', 80, 85) + rateBox('reply_rate', 'Reply Rate', 7, 10) : ''}
         </div>
 
         <div class="section">

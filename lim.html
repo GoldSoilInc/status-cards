@@ -16,7 +16,8 @@
     // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
     // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
     // warm_transfers_target = ROUND(SUM('Campaign Members'!D2:D)/600, 0)
-    // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — EOD-only display.
+    // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — shown EOD;
+    // "Result at EOD" placeholder before the 5 PM slot.
     // ============================================
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
@@ -39,7 +40,7 @@
       const wtTarget = (wtTargetRaw !== '' && !isNaN(Number(wtTargetRaw))) ? Number(wtTargetRaw) : null;
       const wtPct = (wtTarget && wtTarget > 0) ? Math.round((warmTransfers / wtTarget) * 100) : null;
 
-      // ---- Delivery / Reply rates (read always, displayed EOD only) ----
+      // ---- Delivery / Reply rates: read always, color-coded value shown EOD only ----
       const isEOD = getCurrentTimeSlot() === '5pm';
 
       // ---- Targets (sheet-overridable; blank = TBD pill, no invented numbers) ----
@@ -69,10 +70,18 @@
         return `<div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:${met ? 'var(--gs-dark-green)' : 'var(--gs-gold)'}; color:${met ? 'var(--gs-gold)' : 'var(--gs-dark-green)'}; font-size:9px; font-weight:bold; letter-spacing:0.5px;">${met ? '\u2713 ' : ''}${pct}% OF TARGET</div>`;
       };
 
-      // Traffic-light rate box (EOD only). < yellowMin = red, < greenMin = yellow, else green.
-      // Missing/blank shows a neutral dash so a not-yet-synced metric doesn't read as a scary 0%.
+      // Traffic-light rate box. Before EOD, shows a "Result at EOD" placeholder so the
+      // box is always present (layout never jumps from 4 to 6). At EOD, shows the
+      // color-coded value: < yellowMin = red, < greenMin = yellow, else green.
       const RATE_RED = '#B23A3A', RATE_YELLOW = '#C4A22F', RATE_GREEN = '#1A472A';
       const rateBox = (key, label, yellowMin, greenMin) => {
+        if (!isEOD) {
+          return `<div class="kpi-cell">
+              <div class="kpi-value" style="color:var(--gs-faint); font-size:22px;">\u2014</div>
+              <div class="kpi-label">${label}</div>
+              <div style="display:inline-block; margin-top:6px; padding:2px 9px; border-radius:10px; background:var(--gs-cream); color:var(--gs-dark-green); border:0.5px solid var(--gs-gold); font-size:8.5px; font-weight:bold; letter-spacing:0.3px;">RESULT AT EOD</div>
+            </div>`;
+        }
         const raw = val(data, key, '');
         if (raw === '' || isNaN(Number(raw))) {
           return `<div class="kpi-cell">
@@ -88,8 +97,8 @@
           </div>`;
       };
 
-      // 4 boxes normally; 6 at the 5 PM update (Delivery + Reply rates appear).
-      const heroCols = isEOD ? 6 : 4;
+      // Always 6 boxes — rate boxes show "Result at EOD" until the 5 PM update.
+      const heroCols = 6;
 
       return wrapCard(`
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
@@ -115,7 +124,8 @@
             <div class="kpi-label">Show-Up Rate</div>
             ${goalPill(showUpRate, 'show_up_rate_target', true)}
           </div>
-          ${isEOD ? rateBox('delivery_rate', 'Delivery Rate', 80, 85) + rateBox('reply_rate', 'Reply Rate', 7, 10) : ''}
+          ${rateBox('delivery_rate', 'Delivery Rate', 80, 85)}
+          ${rateBox('reply_rate', 'Reply Rate', 7, 10)}
         </div>
 
         <div class="section">

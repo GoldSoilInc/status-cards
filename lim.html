@@ -28,7 +28,7 @@
     let GOALS_MET = false;
 
     function renderCard(data) {
-      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan', 'nada']);
+      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan', 'nada', 'mina']);
 
       // ---- KPI values (today) ----
       const warmTransfers = num(data, 'warm_transfers');
@@ -170,7 +170,8 @@
         maryam: 'Maryam Selim',
         ahmed: 'Ahmed Abdelbaset',
         juan: 'Juan Pablo Larrea',
-        nada: 'Nada Ahmed'
+        nada: 'Nada Ahmed',
+        mina: 'Mina Kamal'
       };
       return names.map(n => ({
         name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),

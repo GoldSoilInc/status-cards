@@ -13,8 +13,11 @@
   <script>
     // ============================================
     // LAND INTAKE (LIM) TEAM CARD
-    // Phone -> Appointment funnel: Warm Transfers, Appts Set, Show-Up Rate.
-    // Reads LIM_metrics (warm_transfers, appts, show_up_rate + per-agent).
+    // Phone -> Appointment funnel: Warm Transfers, Pre-Qualified, Appts Set, Show-Up Rate.
+    // Reads LIM_metrics (warm_transfers, pre_qualified, appts, show_up_rate + per-agent).
+    // warm_transfers_target holds the COMBINED Warm Transfer + Pre-Qualified target.
+    // (Key name kept as-is so the existing metrics row keeps working — single source,
+    //  no fallback row, to avoid silent drift.)
     // warm_transfers_target = ROUND(SUM('Campaign Members'!D2:D)/600, 0)
     // delivery_rate / reply_rate from 'Delivery / Reply Rate' tab — own row below
     // By Agent; "Result at EOD" placeholder before the 5 PM slot.
@@ -22,23 +25,25 @@
     const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSMUBPWS464Rq_ID_Zjoj-PU5QuDeIj2PK6pSKV22rEZ8_0_zxjYagl4SYM3TZckmIkaxhyr_QtyUk9/pub?gid=1101423418&single=true&output=csv";
 
     const TEAM_NAME = "Land Intake Team";
-    const TEAM_LEAD = "Juan";
+    const TEAM_LEAD = "Maryam";
 
     // Set true by renderCard when the Appts target is hit; gates the confetti.
     let GOALS_MET = false;
 
     function renderCard(data) {
-      const agents = parseAgents(data, ['martina', 'maryam', 'ahmed', 'juan', 'nada', 'mina']);
+      const agents = parseAgents(data, ['maryam', 'ahmed', 'martina', 'mariam']);
 
       // ---- KPI values (today) ----
       const warmTransfers = num(data, 'warm_transfers');
+      const preQualified  = num(data, 'pre_qualified');
       const apptsSet      = num(data, 'appts');
       const showUpRate    = val(data, 'show_up_rate', '0');
 
-      // ---- Warm transfer target + % attained ----
+      // ---- Combined Warm Transfer + Pre-Qualified target + % attained ----
       const wtTargetRaw = val(data, 'warm_transfers_target', '');
       const wtTarget = (wtTargetRaw !== '' && !isNaN(Number(wtTargetRaw))) ? Number(wtTargetRaw) : null;
-      const wtPct = (wtTarget && wtTarget > 0) ? Math.round((warmTransfers / wtTarget) * 100) : null;
+      const combined = warmTransfers + preQualified;
+      const wtPct = (wtTarget && wtTarget > 0) ? Math.round((combined / wtTarget) * 100) : null;
 
       // ---- Delivery / Reply rates: read always, color-coded value shown EOD only ----
       const isEOD = getCurrentTimeSlot() === '5pm';
@@ -101,15 +106,19 @@
         ${renderHeader(TEAM_NAME, TEAM_LEAD)}
         ${renderTimeStrip(getCurrentTimeSlot())}
 
-        <div class="kpi-strip" style="grid-template-columns: repeat(4, 1fr);">
+        <div class="kpi-strip" style="grid-template-columns: repeat(5, 1fr);">
           <div class="kpi-cell">
             <div class="kpi-value">${wtTarget !== null ? wtTarget : '\u2014'}</div>
-            <div class="kpi-label">Warm Transfer Target</div>
+            <div class="kpi-label">Warm Transfer + Pre-Qualified Target</div>
+            ${pctPill(wtPct)}
           </div>
           <div class="kpi-cell">
             <div class="kpi-value">${warmTransfers}</div>
             <div class="kpi-label">Warm Transfers</div>
-            ${pctPill(wtPct)}
+          </div>
+          <div class="kpi-cell">
+            <div class="kpi-value">${preQualified}</div>
+            <div class="kpi-label">Pre-Qualified</div>
           </div>
           <div class="kpi-cell accent">
             <div class="kpi-value">${apptsSet}</div>
@@ -130,6 +139,7 @@
               <tr>
                 <th>AGENT</th>
                 <th class="num">WARM TRANSFERS</th>
+                <th class="num">PRE-QUALIFIED</th>
                 <th class="num">APPTS</th>
                 <th class="num">SHOW-UP</th>
               </tr>
@@ -139,6 +149,7 @@
                 <tr>
                   <td class="label">${a.name}</td>
                   <td class="num">${a.warm_transfers}</td>
+                  <td class="num">${a.pre_qualified}</td>
                   <td class="num highlight">${a.appts}</td>
                   <td class="num gold">${a.show_up_rate}%</td>
                 </tr>
@@ -146,6 +157,7 @@
               <tr class="total">
                 <td>TOTAL</td>
                 <td class="num">${warmTransfers}</td>
+                <td class="num">${preQualified}</td>
                 <td class="num">${apptsSet}</td>
                 <td class="num">${showUpRate}%</td>
               </tr>
@@ -166,16 +178,15 @@
     // Full names must match the value in that column exactly for COUNTIF to land.
     function parseAgents(data, names) {
       const fullNames = {
-        martina: 'Martina Misheal',
         maryam: 'Maryam Selim',
         ahmed: 'Ahmed Abdelbaset',
-        juan: 'Juan Pablo Larrea',
-        nada: 'Nada Ahmed',
-        mina: 'Mina Kamal'
+        martina: 'Martina Misheal',
+        mariam: 'Mariam Farouk'
       };
       return names.map(n => ({
         name: fullNames[n] || n.charAt(0).toUpperCase() + n.slice(1),
         warm_transfers: num(data, `${n}_warm_transfers`),
+        pre_qualified: num(data, `${n}_pre_qualified`),
         appts: num(data, `${n}_appts`),
         show_up_rate: val(data, `${n}_show_up_rate`, '0')
       }));
